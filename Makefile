@@ -11,8 +11,7 @@ test-contract:
 	uv run --package evox-api pytest packages/api/tests/contract
 
 test-integration:
-	@echo "Integration tests are not implemented yet; run the agent-2 persistence lane first." >&2
-	@exit 2
+	uv run --package evox-api pytest packages/api/tests/integration
 
 e2e:
 	pnpm --filter @evox/web test:e2e
@@ -36,12 +35,10 @@ infra-check:
 	./scripts/tests/test_deploy_contract.sh
 
 verify-live:
-	@echo "Live sponsor verification is not implemented yet; run the agent-15 live QA lane first." >&2
-	@exit 2
+	./scripts/verify_live.sh
 
 smoke:
-	@echo "Deployment smoke verification is not implemented yet; run the agent-15 live QA lane first." >&2
-	@exit 2
+	./scripts/smoke.sh
 
 deploy:
 	./scripts/deploy.sh

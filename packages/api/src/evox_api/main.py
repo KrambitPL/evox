@@ -16,6 +16,10 @@ def create_app() -> FastAPI:
     app = FastAPI(title="Evox API", version="0.1.0")
     app.add_exception_handler(DomainError, domain_error_response)
 
+    @app.get("/healthz", include_in_schema=False)
+    async def healthz() -> dict[str, str]:
+        return {"status": "ready"}
+
     @app.post("/v1/missions", response_model=MissionContract, status_code=status.HTTP_201_CREATED)
     async def create_mission(mission: MissionContract) -> MissionContract:
         del mission
