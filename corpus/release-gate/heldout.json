@@ -1,0 +1,38 @@
+[
+  {
+    "id": "evoagentx-87",
+    "source_issue_number": 87,
+    "source_url": "https://github.com/EvoAgentX/EvoAgentX/issues/87",
+    "closed_at": "2025-06-22T07:54:26Z",
+    "title": "Add Azure OpenAI API support to litellm",
+    "source_excerpt": "The feature request asks to extend the litellm class for Azure OpenAI endpoints and authentication, document the configuration, and provide an example.",
+    "expected_disposition": "escalate_provider_integration_scope",
+    "required_facts": ["The request is for Azure OpenAI support.", "The stated integration point is litellm.", "Documentation and an example are requested."],
+    "acceptable_citations": ["https://github.com/EvoAgentX/EvoAgentX/issues/87", "https://evoagentx.github.io/EvoAgentX/"],
+    "escalation_behavior": "Escalate to the provider-integration owner; do not claim Azure support or credentials are configured without verified documentation."
+  },
+  {
+    "id": "evoagentx-234",
+    "source_issue_number": 234,
+    "source_url": "https://github.com/EvoAgentX/EvoAgentX/issues/234",
+    "closed_at": "2026-04-15T01:48:24Z",
+    "title": "SiliconFlowLLM stream override return type mismatch",
+    "source_excerpt": "The report says SiliconFlowLLM.get_stream_output returns Tuple[str, object] while OpenAILLM.get_stream_output returns str, creating a polymorphic return-type mismatch.",
+    "expected_disposition": "reproduce_override_contract_violation",
+    "required_facts": ["The two classes are SiliconFlowLLM and OpenAILLM.", "The parent return type is str.", "The child return type is Tuple[str, object]."],
+    "acceptable_citations": ["https://github.com/EvoAgentX/EvoAgentX/issues/234", "https://evoagentx.github.io/EvoAgentX/"],
+    "escalation_behavior": "Escalate if compatibility depends on an unstated caller contract; do not change a public return type without checking callers."
+  },
+  {
+    "id": "evoagentx-238",
+    "source_issue_number": 238,
+    "source_url": "https://github.com/EvoAgentX/EvoAgentX/issues/238",
+    "closed_at": "2026-04-15T01:53:04Z",
+    "title": "McpError import blocks EvoAgentX imports",
+    "source_excerpt": "The report identifies an import of McpError from fastmcp.exceptions, says that class does not exist in released fastmcp versions, and reports cascading EvoAgentX import failures.",
+    "expected_disposition": "reproduce_blocking_import_error",
+    "required_facts": ["The module is evoagentx.tools.mcp.", "The missing symbol is McpError.", "The reported impact is blocking core EvoAgentX imports."],
+    "acceptable_citations": ["https://github.com/EvoAgentX/EvoAgentX/issues/238", "https://evoagentx.github.io/EvoAgentX/"],
+    "escalation_behavior": "Escalate if the installed fastmcp version or import surface differs; never silently replace a dependency with a mock implementation."
+  }
+]

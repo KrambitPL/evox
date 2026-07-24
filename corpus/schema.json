@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "EvoAgentX resolved issue evaluation case",
+  "type": "object",
+  "required": ["id", "source_issue_number", "source_url", "closed_at", "title", "source_excerpt", "expected_disposition", "required_facts", "acceptable_citations", "escalation_behavior"],
+  "properties": {
+    "id": {"type": "string", "pattern": "^evoagentx-[0-9]+$"},
+    "source_issue_number": {"type": "integer", "minimum": 1},
+    "source_url": {"type": "string", "pattern": "^https://github\\.com/EvoAgentX/EvoAgentX/issues/[0-9]+$"},
+    "closed_at": {"type": "string", "format": "date-time"},
+    "title": {"type": "string", "minLength": 1},
+    "source_excerpt": {"type": "string", "minLength": 1},
+    "expected_disposition": {"type": "string", "minLength": 1},
+    "required_facts": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+    "acceptable_citations": {"type": "array", "minItems": 1, "items": {"type": "string", "format": "uri"}},
+    "escalation_behavior": {"type": "string", "minLength": 1}
+  },
+  "additionalProperties": false
+}

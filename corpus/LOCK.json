@@ -1,0 +1,10 @@
+{
+  "corpus_id": "evoagentx-resolved-issues-v1",
+  "source_repository": "https://github.com/EvoAgentX/EvoAgentX",
+  "splits": {"train": 8, "dev": 4, "heldout": 3},
+  "heldout_loading": "Release-gated: optimizer loaders may only load train or dev; held-out cases are supplied by the independent release evaluator.",
+  "documentation_sources": [
+    "https://evoagentx.github.io/EvoAgentX/",
+    "https://evoagentx.github.io/EvoAgentX/api/optimizers.html"
+  ]
+}

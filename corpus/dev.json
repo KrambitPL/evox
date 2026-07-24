@@ -1,0 +1,50 @@
+[
+  {
+    "id": "evoagentx-223",
+    "source_issue_number": 223,
+    "source_url": "https://github.com/EvoAgentX/EvoAgentX/issues/223",
+    "closed_at": "2026-04-08T09:02:58Z",
+    "title": "SiliconFlowLLM response lifecycle is fragile",
+    "source_excerpt": "The report says self.response is not initialized for a non-stream call and get_cost then raises AttributeError.",
+    "expected_disposition": "reproduce_response_lifecycle",
+    "required_facts": ["The component is SiliconFlowLLM.", "The scenario starts with a non-stream call.", "get_cost is reported to raise AttributeError."],
+    "acceptable_citations": ["https://github.com/EvoAgentX/EvoAgentX/issues/223", "https://evoagentx.github.io/EvoAgentX/"],
+    "escalation_behavior": "Escalate if the current implementation has changed; preserve the non-stream then get_cost sequence in evidence."
+  },
+  {
+    "id": "evoagentx-224",
+    "source_issue_number": 224,
+    "source_url": "https://github.com/EvoAgentX/EvoAgentX/issues/224",
+    "closed_at": "2026-04-08T09:02:58Z",
+    "title": "SiliconFlowLLM concurrent response race",
+    "source_excerpt": "The report says concurrent calls share self.response, causing incorrect cost calculations and data corruption.",
+    "expected_disposition": "reproduce_concurrent_state_race",
+    "required_facts": ["The shared state is self.response.", "The reported impact includes incorrect cost calculation.", "The scenario uses concurrent async calls."],
+    "acceptable_citations": ["https://github.com/EvoAgentX/EvoAgentX/issues/224", "https://evoagentx.github.io/EvoAgentX/"],
+    "escalation_behavior": "Escalate with a deterministic concurrent reproducer if an isolated run cannot establish cross-call state contamination."
+  },
+  {
+    "id": "evoagentx-231",
+    "source_issue_number": 231,
+    "source_url": "https://github.com/EvoAgentX/EvoAgentX/issues/231",
+    "closed_at": "2026-04-15T01:20:00Z",
+    "title": "MapElitesOptimizer mutable search space corruption",
+    "source_excerpt": "The report says _mutate_cfg assigns a selected alternative without deepcopy, allowing a mutable search-space value to be shared.",
+    "expected_disposition": "reproduce_mutable_aliasing",
+    "required_facts": ["The method is _mutate_cfg.", "The affected optimizer is MapElitesOptimizer.", "The risk applies to mutable dict or list values."],
+    "acceptable_citations": ["https://github.com/EvoAgentX/EvoAgentX/issues/231", "https://evoagentx.github.io/EvoAgentX/api/optimizers.html"],
+    "escalation_behavior": "Escalate if a proposed correction changes the frozen search space or evaluation budget instead of isolating mutable values."
+  },
+  {
+    "id": "evoagentx-233",
+    "source_issue_number": 233,
+    "source_url": "https://github.com/EvoAgentX/EvoAgentX/issues/233",
+    "closed_at": "2026-04-15T01:48:23Z",
+    "title": "asyncio.get_event_loop in async generation",
+    "source_excerpt": "The report identifies asyncio.get_event_loop inside async coroutine methods and proposes asyncio.get_running_loop.",
+    "expected_disposition": "reproduce_async_runtime_compatibility",
+    "required_facts": ["The methods are single_generate_async implementations.", "The issue concerns asyncio.get_event_loop.", "The proposed replacement is asyncio.get_running_loop."],
+    "acceptable_citations": ["https://github.com/EvoAgentX/EvoAgentX/issues/233", "https://evoagentx.github.io/EvoAgentX/"],
+    "escalation_behavior": "Escalate with the exact Python runtime and event-loop context if behavior differs from the reported async execution path."
+  }
+]
