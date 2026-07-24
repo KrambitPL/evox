@@ -11,4 +11,9 @@
 - Live systems never self-edit. Failures enqueue an offline candidate cycle.
 - Held-out cases are sealed from optimizers and only opened after candidate freeze.
 - Infrastructure targets AWS, while local tests use isolated test doubles only.
-
+- Actian outcome memory uses the official async VectorAI client with explicit production
+  embedding and persisted-context dependencies; it does not synthesize metadata or select
+  a fallback embedding/model route.
+- Every Actian recall applies a mandatory tenant predicate and accepts only allow-listed
+  metadata filters. Missing configuration, an unavailable server, malformed stored data,
+  or invalid embedding dimensions reject the operation explicitly.
