@@ -290,7 +290,7 @@ resource "aws_ecs_task_definition" "api" {
   execution_role_arn       = aws_iam_role.execution.arn
   task_role_arn            = aws_iam_role.api.arn
   runtime_platform {
-    cpu_architecture        = "X86_64"
+    cpu_architecture        = var.cpu_architecture
     operating_system_family = "LINUX"
   }
   volume { name = "tmp" }
@@ -326,7 +326,7 @@ resource "aws_ecs_task_definition" "web" {
   execution_role_arn       = aws_iam_role.execution.arn
   task_role_arn            = aws_iam_role.web.arn
   runtime_platform {
-    cpu_architecture        = "X86_64"
+    cpu_architecture        = var.cpu_architecture
     operating_system_family = "LINUX"
   }
   volume { name = "tmp" }
@@ -349,7 +349,7 @@ resource "aws_ecs_task_definition" "worker" {
   execution_role_arn       = aws_iam_role.execution.arn
   task_role_arn            = aws_iam_role.worker.arn
   runtime_platform {
-    cpu_architecture        = "X86_64"
+    cpu_architecture        = var.cpu_architecture
     operating_system_family = "LINUX"
   }
   volume { name = "tmp" }

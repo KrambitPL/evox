@@ -95,6 +95,16 @@ variable "assign_public_ip" {
   description = "Assign public IPs to Fargate tasks when explicitly using public subnets without NAT."
 }
 
+variable "cpu_architecture" {
+  type        = string
+  default     = "X86_64"
+  description = "Fargate task CPU architecture matching the published image platform."
+  validation {
+    condition     = contains(["X86_64", "ARM64"], var.cpu_architecture)
+    error_message = "cpu_architecture must be X86_64 or ARM64."
+  }
+}
+
 variable "api_image_repository" { type = string }
 variable "web_image_repository" { type = string }
 

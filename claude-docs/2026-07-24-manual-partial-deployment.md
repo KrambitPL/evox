@@ -35,6 +35,11 @@ inbound access; application traffic still arrives only through the CloudFront-re
 ALB. A later network-hardening release can replace this with private subnets, NAT, and
 VPC endpoints without changing application contracts.
 
+The release publishes native `linux/arm64` images and declares matching `ARM64`
+Fargate runtime platforms. The deploy contract validates that image and task
+architectures agree; this avoids unreliable cross-architecture emulation on the
+ARM64 release host while preserving immutable digests and the same security gates.
+
 The deploy fails closed on source authority, dirty worktrees, missing mandatory
 secrets, mutable or unscanned ECR repositories, unsafe state storage, local tests,
 lint, builds, HIGH/CRITICAL source or image findings, ECS readiness, live health,

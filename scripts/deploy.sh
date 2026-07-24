@@ -20,6 +20,12 @@ fi
 export TF_VAR_manage_route53=${TF_VAR_manage_route53:-true}
 export TF_VAR_assign_public_ip=${TF_VAR_assign_public_ip:-false}
 readonly manage_route53=$TF_VAR_manage_route53
+readonly container_platform=${EVOX_CONTAINER_PLATFORM:-linux/amd64}
+case "$container_platform" in
+  linux/amd64) export TF_VAR_cpu_architecture=${TF_VAR_cpu_architecture:-X86_64} ;;
+  linux/arm64) export TF_VAR_cpu_architecture=${TF_VAR_cpu_architecture:-ARM64} ;;
+  *) printf 'deploy: unsupported EVOX_CONTAINER_PLATFORM: %s\n' "$container_platform" >&2; exit 1 ;;
+esac
 readonly aws_region=${AWS_REGION:?Set AWS_REGION to the approved deployment region.}
 readonly api_repository=${EVOX_API_IMAGE_REPOSITORY:?Set EVOX_API_IMAGE_REPOSITORY to the ECR API repository URI.}
 readonly web_repository=${EVOX_WEB_IMAGE_REPOSITORY:?Set EVOX_WEB_IMAGE_REPOSITORY to the ECR web repository URI.}
@@ -166,20 +172,20 @@ build_or_reuse_image() {
   local uri=$1 dockerfile=$2 revision=$3 label
   local image="$uri:$revision"
   if image_exists "$uri" "$revision"; then
-    docker pull --platform linux/amd64 "$image" >/dev/null
+    docker pull --platform "$container_platform" "$image" >/dev/null
   else
-    docker buildx build --platform linux/amd64 --pull --no-cache --load \
+    docker buildx build --platform "$container_platform" --pull --no-cache --load \
       --build-arg "REVISION=$revision" --tag "$image" --file "$root_dir/$dockerfile" "$root_dir"
   fi
 
   label=$(docker image inspect --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}' "$image")
   test "$label" = "$revision" || fail "image source revision label does not match the release SHA: $image"
   if test "$dockerfile" = "Dockerfile.api"; then
-    docker run --rm --platform linux/amd64 --entrypoint /bin/sh "$image" -ec \
+    docker run --rm --platform "$container_platform" --entrypoint /bin/sh "$image" -ec \
       'command -v uvicorn >/dev/null && command -v evox-worker >/dev/null' \
       || fail "API image is missing the real API or worker entrypoint"
   else
-    docker run --rm --platform linux/amd64 --entrypoint /bin/sh "$image" -ec \
+    docker run --rm --platform "$container_platform" --entrypoint /bin/sh "$image" -ec \
       'test -x /app/node_modules/.bin/next' \
       || fail "web image is missing the real Next.js runtime entrypoint"
   fi
@@ -349,6 +355,10 @@ main() {
     || fail "EVOX_ALLOW_UNAVAILABLE_SPONSORS must be true or false"
   test "$manage_route53" = "true" || test "$manage_route53" = "false" \
     || fail "TF_VAR_manage_route53 must be true or false"
+  case "$container_platform:$TF_VAR_cpu_architecture" in
+    linux/amd64:X86_64|linux/arm64:ARM64) ;;
+    *) fail "container platform and Fargate CPU architecture do not match" ;;
+  esac
   [[ "$state_key" != /* && "$state_key" != *".."* ]] || fail "Terraform state key must be a safe relative object key"
   verify_terraform_inputs
   revision=$(verify_release_authority)
