@@ -14,10 +14,10 @@ node_modules/
 playwright-report/
 test-results/
 replay-recordings/
+evidence/deployments/
 .terraform/
 *.tfstate
 *.tfstate.*
 .worktrees/
 .superpowers/
 evidence/live/
-

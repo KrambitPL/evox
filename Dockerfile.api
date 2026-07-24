@@ -1,0 +1,27 @@
+FROM ghcr.io/astral-sh/uv:0.6.3-python3.11-bookworm-slim AS builder
+WORKDIR /app
+COPY pyproject.toml uv.lock ./
+COPY packages/api/pyproject.toml packages/api/pyproject.toml
+RUN uv sync --frozen --no-dev --package evox-api
+RUN uv pip install --python /app/.venv/bin/python uvicorn==0.34.0
+COPY packages/api/src packages/api/src
+
+FROM python:3.11-slim-trixie
+ARG REVISION
+LABEL org.opencontainers.image.source="https://github.com/KrambitPL/evox" \
+      org.opencontainers.image.revision="$REVISION"
+RUN useradd --create-home --uid 10001 evox
+RUN /bin/rm -rf \
+      /usr/local/lib/python3.11/site-packages/pip* \
+      /usr/local/lib/python3.11/site-packages/setuptools* \
+      /usr/local/lib/python3.11/site-packages/wheel* \
+      /usr/local/bin/pip \
+      /usr/local/bin/pip3 \
+      /usr/local/bin/pip3.11
+WORKDIR /app
+COPY --from=builder /app/.venv /app/.venv
+COPY --from=builder /app/packages/api/src /app/src
+ENV PATH="/app/.venv/bin:$PATH" PYTHONPATH="/app/src" PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+USER 10001
+EXPOSE 8000
+CMD ["uvicorn", "evox_api.main:app", "--host", "0.0.0.0", "--port", "8000", "--no-access-log"]

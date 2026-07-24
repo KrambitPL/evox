@@ -39,3 +39,5 @@ Python commands run through `uv`; JavaScript commands run through `pnpm`. The Ma
 is the public entry point. See [MISSION.md](MISSION.md) and
 [the implementation plan](docs/plans/2026-07-24-evox-implementation.md).
 
+AWS topology, environment inputs, direct-deploy safety checks, and rollback are documented
+in [the deployment runbook](docs/operations/aws-deployment.md).
