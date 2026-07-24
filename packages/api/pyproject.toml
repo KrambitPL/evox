@@ -16,6 +16,9 @@ dependencies = [
 [project.scripts]
 evox-worker = "evox_api.jobs.worker:main"
 
+[tool.uv]
+package = true
+
 [dependency-groups]
 dev = [
     "pytest>=8.3,<9.0",
