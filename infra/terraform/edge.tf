@@ -142,6 +142,7 @@ resource "aws_wafv2_web_acl_logging_configuration" "edge" {
 }
 
 resource "aws_route53_record" "web" {
+  count   = var.manage_route53 ? 1 : 0
   zone_id = var.hosted_zone_id
   name    = var.domain_name
   type    = "A"
@@ -153,6 +154,7 @@ resource "aws_route53_record" "web" {
 }
 
 resource "aws_route53_record" "web_ipv6" {
+  count   = var.manage_route53 ? 1 : 0
   zone_id = var.hosted_zone_id
   name    = var.domain_name
   type    = "AAAA"
@@ -164,6 +166,7 @@ resource "aws_route53_record" "web_ipv6" {
 }
 
 resource "aws_route53_record" "origin" {
+  count   = var.manage_route53 ? 1 : 0
   zone_id = var.hosted_zone_id
   name    = local.origin_domain_name
   type    = "A"

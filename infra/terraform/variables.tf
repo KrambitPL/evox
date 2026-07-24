@@ -56,7 +56,14 @@ variable "cloudfront_certificate_arn" {
 
 variable "hosted_zone_id" {
   type        = string
+  default     = ""
   description = "Route53 hosted zone ID for domain_name."
+}
+
+variable "manage_route53" {
+  type        = bool
+  default     = true
+  description = "Create public and origin DNS records in Route53. Disable when authoritative DNS is external."
 }
 
 variable "vpc_id" {
@@ -82,6 +89,12 @@ variable "private_subnet_ids" {
   }
 }
 
+variable "assign_public_ip" {
+  type        = bool
+  default     = false
+  description = "Assign public IPs to Fargate tasks when explicitly using public subnets without NAT."
+}
+
 variable "api_image_repository" { type = string }
 variable "web_image_repository" { type = string }
 
@@ -93,6 +106,16 @@ variable "pioneer_secret_arn" {
 variable "sponsor_secret_arn" {
   type        = string
   description = "Secrets Manager ARN containing real Senso, Actian, Band, and Guild configuration."
+}
+
+variable "available_sponsors" {
+  type        = set(string)
+  default     = ["senso", "actian", "band", "guild", "replay"]
+  description = "Sponsor integrations whose exact secret fields are injected into the runtime."
+  validation {
+    condition     = length(setsubtract(var.available_sponsors, toset(["senso", "actian", "band", "guild", "replay"]))) == 0
+    error_message = "available_sponsors contains an unsupported integration."
+  }
 }
 
 variable "alarm_topic_arn" {

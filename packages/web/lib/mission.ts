@@ -27,8 +27,8 @@ export function validateMissionDraft(draft: MissionDraft): MissionDraftErrors {
   if (!draft.hardConstraints.some((item) => item.trim())) {
     errors.hardConstraints = requiredArrayMessage
   }
-  if (!draft.datasetIds.some((item) => item.trim())) {
-    errors.datasetIds = requiredArrayMessage
+  if (draft.datasetIds.filter((item) => item.trim()).length !== 3) {
+    errors.datasetIds = 'Provide train, development, and held-out dataset references.'
   }
   if (!Number.isFinite(draft.budgetUsd) || draft.budgetUsd <= 0) {
     errors.budgetUsd = 'Set a budget greater than zero.'

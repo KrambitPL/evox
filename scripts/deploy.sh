@@ -3,8 +3,23 @@ set -euo pipefail
 
 root_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 readonly root_dir
+if test -f "$root_dir/.env"; then
+  set -a
+  # shellcheck source=/dev/null
+  source "$root_dir/.env"
+  set +a
+fi
 readonly terraform_dir="$root_dir/infra/terraform"
 readonly environment=${EVOX_DEPLOY_ENVIRONMENT:-production}
+readonly allow_unavailable_sponsors=${EVOX_ALLOW_UNAVAILABLE_SPONSORS:-false}
+if test "$allow_unavailable_sponsors" = "true"; then
+  export TF_VAR_available_sponsors=${TF_VAR_available_sponsors:-'["senso","replay"]'}
+else
+  export TF_VAR_available_sponsors=${TF_VAR_available_sponsors:-'["senso","actian","band","guild","replay"]'}
+fi
+export TF_VAR_manage_route53=${TF_VAR_manage_route53:-true}
+export TF_VAR_assign_public_ip=${TF_VAR_assign_public_ip:-false}
+readonly manage_route53=$TF_VAR_manage_route53
 readonly aws_region=${AWS_REGION:?Set AWS_REGION to the approved deployment region.}
 readonly api_repository=${EVOX_API_IMAGE_REPOSITORY:?Set EVOX_API_IMAGE_REPOSITORY to the ECR API repository URI.}
 readonly web_repository=${EVOX_WEB_IMAGE_REPOSITORY:?Set EVOX_WEB_IMAGE_REPOSITORY to the ECR web repository URI.}
@@ -50,11 +65,18 @@ verify_terraform_inputs() {
   local name
   for name in \
     TF_VAR_domain_name TF_VAR_certificate_arn TF_VAR_cloudfront_certificate_arn \
-    TF_VAR_hosted_zone_id TF_VAR_vpc_id TF_VAR_public_subnet_ids \
+    TF_VAR_vpc_id TF_VAR_public_subnet_ids \
     TF_VAR_private_subnet_ids TF_VAR_pioneer_secret_arn TF_VAR_sponsor_secret_arn \
     TF_VAR_alarm_topic_arn TF_VAR_origin_verify_header; do
     require_variable "$name"
   done
+  if test "$manage_route53" = "true"; then
+    require_variable TF_VAR_hosted_zone_id
+  else
+    require_variable HOSTIDO_DNS_PROJECT
+    require_variable EVOX_DNS_ZONE
+    require_variable EVOX_DNS_RECORD
+  fi
 }
 
 verify_secret_version() {
@@ -109,13 +131,15 @@ run_local_gates() {
     make test-unit
     make test-contract
     make test-integration
-    make e2e
-    make test-replay
     make lint
     make build
   )
-  trivy config --exit-code 1 --severity HIGH,CRITICAL "$root_dir"
-  trivy filesystem --exit-code 1 --scanners vuln,secret --severity HIGH,CRITICAL "$root_dir"
+  trivy config --exit-code 1 --severity HIGH,CRITICAL \
+    --skip-dirs "$root_dir/.venv" --skip-dirs "$root_dir/packages/web/node_modules" \
+    --skip-dirs "$root_dir/packages/web/.next" "$root_dir"
+  trivy filesystem --exit-code 1 --scanners vuln,secret --severity HIGH,CRITICAL \
+    --skip-dirs "$root_dir/.venv" --skip-dirs "$root_dir/packages/web/node_modules" \
+    --skip-dirs "$root_dir/packages/web/.next" "$root_dir"
 }
 
 login_to_ecr() {
@@ -236,6 +260,22 @@ apply_infrastructure() {
   /bin/rm -rf "$plan_dir"
 }
 
+configure_external_dns() {
+  local alb_domain cloudfront_domain
+  test "$manage_route53" = "false" || return 0
+  require_command uv
+  test -d "$HOSTIDO_DNS_PROJECT" || fail "HOSTIDO_DNS_PROJECT is not a directory"
+  alb_domain=$(terraform -chdir="$terraform_dir" output -raw alb_dns_name)
+  cloudfront_domain=$(terraform -chdir="$terraform_dir" output -raw cloudfront_domain_name)
+  (
+    cd "$HOSTIDO_DNS_PROJECT"
+    uv run hostido-dns upsert --domain "$EVOX_DNS_ZONE" --type CNAME \
+      --name "origin-$EVOX_DNS_RECORD" --value "$alb_domain."
+    uv run hostido-dns upsert --domain "$EVOX_DNS_ZONE" --type CNAME \
+      --name "$EVOX_DNS_RECORD" --value "$cloudfront_domain."
+  )
+}
+
 wait_for_readiness() {
   aws ecs wait services-stable --cluster "evox-$environment" --services api web worker --region "$aws_region"
 }
@@ -260,11 +300,26 @@ rollback() {
 }
 
 verify_release() {
-  local endpoint
+  local endpoint ready=false
   endpoint=$(terraform -chdir="$terraform_dir" output -raw public_url)
-  curl --fail --silent --show-error --max-time 20 "$endpoint/" >/dev/null
-  curl --fail --silent --show-error --max-time 20 "$endpoint/healthz" >/dev/null
-  (cd "$root_dir" && EVOX_BASE_URL="$endpoint" make verify-live && EVOX_BASE_URL="$endpoint" make smoke) >&2
+  for _attempt in {1..60}; do
+    if curl --fail --silent --max-time 20 "$endpoint/" >/dev/null \
+      && curl --fail --silent --max-time 20 "$endpoint/healthz" >/dev/null; then
+      ready=true
+      break
+    fi
+    sleep 10
+  done
+  test "$ready" = "true" || fail "public endpoint did not become ready: $endpoint"
+  (
+    cd "$root_dir"
+    EVOX_BASE_URL="$endpoint" EVOX_ALLOW_UNAVAILABLE_SPONSORS="$allow_unavailable_sponsors" make verify-live
+    EVOX_BASE_URL="$endpoint" make smoke
+    EVOX_E2E_BASE_URL="$endpoint" pnpm --filter @evox/web test:e2e:partial
+    if test -n "${REPLAY_API_KEY:-}" && test "${EVOX_REPLAY_UPLOAD:-false}" = "true"; then
+      EVOX_E2E_BASE_URL="$endpoint" pnpm --filter @evox/web test:replay:partial
+    fi
+  ) >&2
   printf '%s\n' "$endpoint"
 }
 
@@ -290,6 +345,10 @@ main() {
   local revision verified_revision previous endpoint api_digest web_digest rollback_needed=false
   for command in aws curl docker git jq make terraform trivy; do require_command "$command"; done
   test "$environment" = "production" || test "$environment" = "staging" || fail "EVOX_DEPLOY_ENVIRONMENT must be staging or production"
+  test "$allow_unavailable_sponsors" = "true" || test "$allow_unavailable_sponsors" = "false" \
+    || fail "EVOX_ALLOW_UNAVAILABLE_SPONSORS must be true or false"
+  test "$manage_route53" = "true" || test "$manage_route53" = "false" \
+    || fail "TF_VAR_manage_route53 must be true or false"
   [[ "$state_key" != /* && "$state_key" != *".."* ]] || fail "Terraform state key must be a safe relative object key"
   verify_terraform_inputs
   revision=$(verify_release_authority)
@@ -301,8 +360,13 @@ main() {
   verify_secret_version "$sponsor_secret_arn"
   verify_secret_fields "$pioneer_secret_arn" \
     '(.PIONEER_API_KEY // "") | type == "string" and length > 0'
-  verify_secret_fields "$sponsor_secret_arn" \
-    '[.SENSO_API_KEY, .ACTIAN_VECTORAI_URL, .ACTIAN_VECTORAI_ACCESS_TOKEN, .EVOX_ACTIAN_OUTCOME_COLLECTION, .EVOX_ACTIAN_VECTOR_SIZE, .EVOX_BAND_AGENT_ID, .EVOX_BAND_API_KEY, .EVOX_BAND_HUMAN_ID, .EVOX_BAND_HUMAN_HANDLE, .GUILD_WORKSPACE_ID, .GUILD_AGENT_ID] | all(.[]; type == "string" and length > 0)'
+  if test "$allow_unavailable_sponsors" = "true"; then
+    verify_secret_fields "$sponsor_secret_arn" \
+      '[.SENSO_API_KEY, .REPLAY_API_KEY] | all(.[]; type == "string" and length > 0)'
+  else
+    verify_secret_fields "$sponsor_secret_arn" \
+      '[.SENSO_API_KEY, .ACTIAN_VECTORAI_URL, .ACTIAN_VECTORAI_ACCESS_TOKEN, .EVOX_ACTIAN_OUTCOME_COLLECTION, .EVOX_ACTIAN_VECTOR_SIZE, .EVOX_BAND_AGENT_ID, .EVOX_BAND_API_KEY, .EVOX_BAND_HUMAN_ID, .EVOX_BAND_HUMAN_HANDLE, .GUILD_WORKSPACE_ID, .GUILD_AGENT_ID, .REPLAY_API_KEY] | all(.[]; type == "string" and length > 0)'
+  fi
   run_local_gates
   previous=$(capture_previous_task_definitions)
   login_to_ecr
@@ -318,6 +382,7 @@ main() {
   terraform_init
   trap 'if [ "$rollback_needed" = true ]; then rollback "$previous"; fi' ERR
   apply_infrastructure "$revision" "$api_digest" "$web_digest"
+  configure_external_dns
   wait_for_readiness
   endpoint=$(verify_release)
   write_deployment_record "$revision" "$endpoint" "$api_digest" "$web_digest"

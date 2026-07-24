@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import os
 from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import datetime
@@ -26,6 +27,13 @@ class SensoSettings:
     timeout_seconds: float = 15.0
     poll_interval_seconds: float = 1.0
     max_poll_attempts: int = 60
+
+    @classmethod
+    def from_environment(cls) -> SensoSettings:
+        api_key = os.environ.get("SENSO_API_KEY", "")
+        if not api_key.strip():
+            raise IntegrationUnavailable("senso")
+        return cls(api_key=api_key)
 
     def __post_init__(self) -> None:
         if not self.api_key.strip():
@@ -78,6 +86,9 @@ class SensoAdapter:
     async def aclose(self) -> None:
         if not self._client.is_closed:
             await self._client.aclose()
+
+    async def health_check(self) -> None:
+        await self._request_json("GET", "/org/kb/find", params={"q": "evox-health-check"})
 
     async def ingest(self, document: SensoDocument) -> SensoIngestedDocument:
         upload = await self._request_json(

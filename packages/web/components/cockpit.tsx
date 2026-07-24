@@ -20,7 +20,7 @@ const stages: Array<{ id: Stage; label: string; note: string }> = [
 const sponsorNames = ['Pioneer', 'Senso', 'Actian', 'Band', 'Guild.ai', 'Replay.io']
 
 const initialDraft: MissionDraft = {
-  objective: '', successCriteria: [''], capabilities: [''], hardConstraints: [''], datasetIds: [''], budgetUsd: 0, hitlRequired: true,
+  objective: '', successCriteria: [''], capabilities: ['model_inference', 'knowledge_retrieval'], hardConstraints: [''], datasetIds: ['corpus/train.json', 'corpus/dev.json', 'corpus/release-gate/heldout.json'], budgetUsd: 5, hitlRequired: true,
 }
 
 function LinesField({ id, label, hint, value, onChange, error }: { id: string; label: string; hint: string; value: string[]; onChange: (value: string[]) => void; error?: string }) {
@@ -42,7 +42,7 @@ function HealthStrip({ health }: { health: IntegrationHealth[] }) {
     {sponsorNames.map((name) => {
       const item = indexed.get(name.toLowerCase())
       const status = item?.status ?? 'unknown'
-      return <span className="health-item" key={name} title={item?.detail ?? 'No live health record received.'}><i className={`status status-${status}`} aria-hidden="true" />{name}<b>{status}</b></span>
+      return <span className="health-item" key={name} role="status" aria-label={`${name} integration`} title={item?.detail ?? 'No live health record received.'}><i className={`status status-${status}`} aria-hidden="true" />{name}<b>{status}</b></span>
     })}
   </section>
 }

@@ -9,7 +9,7 @@ describe('validateMissionDraft', () => {
       successCriteria: ['A cited answer'],
       capabilities: ['knowledge-search'],
       hardConstraints: ['Preserve permissions'],
-      datasetIds: ['evoagentx-issues-v1'],
+      datasetIds: ['evoagentx-train-v1', 'evoagentx-dev-v1', 'evoagentx-held-out-v1'],
       budgetUsd: 20,
       hitlRequired: true,
     })).toEqual({ objective: 'State the outcome the system must achieve.' })
@@ -21,7 +21,7 @@ describe('validateMissionDraft', () => {
       successCriteria: ['A cited answer'],
       capabilities: ['knowledge-search'],
       hardConstraints: ['Preserve permissions'],
-      datasetIds: ['evoagentx-issues-v1'],
+      datasetIds: ['evoagentx-train-v1', 'evoagentx-dev-v1', 'evoagentx-held-out-v1'],
       budgetUsd: 20,
       hitlRequired: true,
     })).toEqual({})

@@ -39,5 +39,18 @@ export async function getIntegrationHealth(): Promise<IntegrationHealth[]> {
 }
 
 export async function createMission(draft: MissionDraft): Promise<{ id: string }> {
-  return request('/v1/missions', { method: 'POST', body: JSON.stringify(draft) })
+  const values = draft.datasetIds.map((value) => value.trim()).filter(Boolean)
+  return request('/v1/missions', {
+    method: 'POST',
+    body: JSON.stringify({
+      id: `mission-${crypto.randomUUID()}`,
+      objective: draft.objective.trim(),
+      success_criteria: draft.successCriteria.map((value) => value.trim()).filter(Boolean),
+      allowed_capabilities: draft.capabilities.map((value) => value.trim()).filter(Boolean),
+      hard_constraints: draft.hardConstraints.map((value) => value.trim()).filter(Boolean),
+      budgets: { max_cost_usd: draft.budgetUsd, max_latency_ms: 60_000, max_model_calls: 20 },
+      evaluation_datasets: { train_ref: values[0], dev_ref: values[1], held_out_ref: values[2] },
+      hitl_policy: { required_for_escalation: draft.hitlRequired, owner_review_required: true },
+    }),
+  })
 }

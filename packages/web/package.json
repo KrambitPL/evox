@@ -9,7 +9,9 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:e2e": "playwright test --project=chromium",
+    "test:e2e:partial": "playwright test --project=chromium --grep @partial",
     "test:replay": "test -n \"$REPLAY_API_KEY\" && playwright test --project=replay-chromium",
+    "test:replay:partial": "test -n \"$REPLAY_API_KEY\" && playwright test --project=replay-chromium --grep @partial",
     "test:watch": "vitest"
   },
   "dependencies": {

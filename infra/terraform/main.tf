@@ -9,7 +9,7 @@ locals {
   secret_arns        = [data.aws_secretsmanager_secret.pioneer.arn, data.aws_secretsmanager_secret.sponsors.arn]
   log_retention_days = var.environment == "production" ? 90 : 30
   desired_count      = var.environment == "production" ? 2 : 1
-  origin_domain_name = "origin.${var.domain_name}"
+  origin_domain_name = "origin-${var.domain_name}"
 }
 
 resource "aws_s3_bucket" "evidence" {

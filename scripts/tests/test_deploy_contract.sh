@@ -27,6 +27,16 @@ grep -q 'EVOX_BAND_AGENT_ID' "$deploy_script"
 grep -q 'GUILD_WORKSPACE_ID' "$deploy_script"
 grep -q 'make verify-live' "$deploy_script"
 grep -q 'make smoke' "$deploy_script"
+grep -q 'EVOX_ALLOW_UNAVAILABLE_SPONSORS' "$deploy_script"
+grep -q 'test:e2e:partial' "$deploy_script"
+grep -q 'TF_VAR_available_sponsors' "$deploy_script"
+grep -q 'TF_VAR_manage_route53' "$deploy_script"
+grep -q 'HOSTIDO_DNS_PROJECT' "$deploy_script"
+grep -q 'variable "available_sponsors"' "$root_dir/infra/terraform/variables.tf"
+grep -q 'variable "manage_route53"' "$root_dir/infra/terraform/variables.tf"
+grep -q 'variable "assign_public_ip"' "$root_dir/infra/terraform/variables.tf"
+grep -q 'REPLAY_API_KEY' "$root_dir/infra/terraform/compute.tf"
+grep -q 'EVOX_API_BASE_URL' "$root_dir/infra/terraform/compute.tf"
 
 set +e
 output=$(

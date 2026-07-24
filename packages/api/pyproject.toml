@@ -13,6 +13,9 @@ dependencies = [
     "pydantic>=2.10,<3.0",
 ]
 
+[project.scripts]
+evox-worker = "evox_api.jobs.worker:main"
+
 [dependency-groups]
 dev = [
     "pytest>=8.3,<9.0",

@@ -4,6 +4,7 @@ output "web_service_name" { value = aws_ecs_service.web.name }
 output "worker_service_name" { value = aws_ecs_service.worker.name }
 output "cloudfront_domain_name" { value = aws_cloudfront_distribution.web.domain_name }
 output "cloudfront_distribution_id" { value = aws_cloudfront_distribution.web.id }
+output "alb_dns_name" { value = aws_lb.api.dns_name }
 output "public_url" { value = "https://${var.domain_name}" }
 output "evidence_bucket_name" { value = aws_s3_bucket.evidence.id }
 output "jobs_queue_url" { value = aws_sqs_queue.jobs.url }

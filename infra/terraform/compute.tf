@@ -250,20 +250,29 @@ locals {
     { name = "EVOX_EVIDENCE_BUCKET", value = aws_s3_bucket.evidence.id },
     { name = "EVOX_JOBS_QUEUE_URL", value = aws_sqs_queue.jobs.url },
   ]
-  sponsor_secrets = [
+  pioneer_secret = [
     { name = "PIONEER_API_KEY", valueFrom = "${data.aws_secretsmanager_secret.pioneer.arn}:PIONEER_API_KEY::" },
-    { name = "SENSO_API_KEY", valueFrom = "${data.aws_secretsmanager_secret.sponsors.arn}:SENSO_API_KEY::" },
-    { name = "ACTIAN_VECTORAI_URL", valueFrom = "${data.aws_secretsmanager_secret.sponsors.arn}:ACTIAN_VECTORAI_URL::" },
-    { name = "ACTIAN_VECTORAI_ACCESS_TOKEN", valueFrom = "${data.aws_secretsmanager_secret.sponsors.arn}:ACTIAN_VECTORAI_ACCESS_TOKEN::" },
-    { name = "EVOX_ACTIAN_OUTCOME_COLLECTION", valueFrom = "${data.aws_secretsmanager_secret.sponsors.arn}:EVOX_ACTIAN_OUTCOME_COLLECTION::" },
-    { name = "EVOX_ACTIAN_VECTOR_SIZE", valueFrom = "${data.aws_secretsmanager_secret.sponsors.arn}:EVOX_ACTIAN_VECTOR_SIZE::" },
-    { name = "EVOX_BAND_AGENT_ID", valueFrom = "${data.aws_secretsmanager_secret.sponsors.arn}:EVOX_BAND_AGENT_ID::" },
-    { name = "EVOX_BAND_API_KEY", valueFrom = "${data.aws_secretsmanager_secret.sponsors.arn}:EVOX_BAND_API_KEY::" },
-    { name = "EVOX_BAND_HUMAN_ID", valueFrom = "${data.aws_secretsmanager_secret.sponsors.arn}:EVOX_BAND_HUMAN_ID::" },
-    { name = "EVOX_BAND_HUMAN_HANDLE", valueFrom = "${data.aws_secretsmanager_secret.sponsors.arn}:EVOX_BAND_HUMAN_HANDLE::" },
-    { name = "GUILD_WORKSPACE_ID", valueFrom = "${data.aws_secretsmanager_secret.sponsors.arn}:GUILD_WORKSPACE_ID::" },
-    { name = "GUILD_AGENT_ID", valueFrom = "${data.aws_secretsmanager_secret.sponsors.arn}:GUILD_AGENT_ID::" },
   ]
+  sponsor_secret_owners = {
+    SENSO_API_KEY                  = "senso"
+    ACTIAN_VECTORAI_URL            = "actian"
+    ACTIAN_VECTORAI_ACCESS_TOKEN   = "actian"
+    EVOX_ACTIAN_OUTCOME_COLLECTION = "actian"
+    EVOX_ACTIAN_VECTOR_SIZE        = "actian"
+    EVOX_BAND_AGENT_ID             = "band"
+    EVOX_BAND_API_KEY              = "band"
+    EVOX_BAND_HUMAN_ID             = "band"
+    EVOX_BAND_HUMAN_HANDLE         = "band"
+    GUILD_WORKSPACE_ID             = "guild"
+    GUILD_AGENT_ID                 = "guild"
+    REPLAY_API_KEY                 = "replay"
+  }
+  sponsor_secrets = concat(local.pioneer_secret, [
+    for name, sponsor in local.sponsor_secret_owners : {
+      name      = name
+      valueFrom = "${data.aws_secretsmanager_secret.sponsors.arn}:${name}::"
+    } if contains(var.available_sponsors, sponsor)
+  ])
   origin_verify_headers = var.origin_verify_previous_header == null ? [
     var.origin_verify_header,
     ] : [
@@ -324,6 +333,7 @@ resource "aws_ecs_task_definition" "web" {
   container_definitions = jsonencode([{
     name                   = "web", image = local.web_image, essential = true,
     portMappings           = [{ containerPort = 3000, protocol = "tcp" }],
+    environment            = [{ name = "EVOX_API_BASE_URL", value = "https://${var.domain_name}" }],
     readonlyRootFilesystem = true, user = "10001",
     mountPoints            = [{ sourceVolume = "tmp", containerPath = "/tmp", readOnly = false }],
     logConfiguration       = { logDriver = "awslogs", options = { awslogs-group = aws_cloudwatch_log_group.web.name, awslogs-region = var.aws_region, awslogs-stream-prefix = "web" } }
@@ -379,7 +389,7 @@ resource "aws_ecs_service" "api" {
   network_configuration {
     subnets          = var.private_subnet_ids
     security_groups  = [aws_security_group.tasks.id]
-    assign_public_ip = false
+    assign_public_ip = var.assign_public_ip
   }
   load_balancer {
     target_group_arn = aws_lb_target_group.api.arn
@@ -402,7 +412,7 @@ resource "aws_ecs_service" "worker" {
   network_configuration {
     subnets          = var.private_subnet_ids
     security_groups  = [aws_security_group.worker.id]
-    assign_public_ip = false
+    assign_public_ip = var.assign_public_ip
   }
   depends_on = [aws_efs_mount_target.durable]
 }
@@ -420,7 +430,7 @@ resource "aws_ecs_service" "web" {
   network_configuration {
     subnets          = var.private_subnet_ids
     security_groups  = [aws_security_group.tasks.id]
-    assign_public_ip = false
+    assign_public_ip = var.assign_public_ip
   }
   load_balancer {
     target_group_arn = aws_lb_target_group.web.arn

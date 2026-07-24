@@ -4,6 +4,7 @@ COPY pyproject.toml uv.lock ./
 COPY packages/api/pyproject.toml packages/api/pyproject.toml
 RUN uv sync --frozen --no-dev --package evox-api
 RUN uv pip install --python /app/.venv/bin/python uvicorn==0.34.0
+RUN /bin/rm -rf /app/.venv/lib/python3.11/site-packages/debug
 COPY packages/api/src packages/api/src
 
 FROM python:3.11-slim-trixie
