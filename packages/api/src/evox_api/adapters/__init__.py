@@ -1,1 +1,1 @@
-"""Production integrations for Evox ports."""
+"""Infrastructure adapters for the Evox application ports."""
