@@ -19,7 +19,7 @@ if test "${EVOX_ALLOW_UNAVAILABLE_SPONSORS:-false}" = "true"; then
       and ($health.actian == "healthy" or $health.actian == "unavailable")
       and ($health.band == "healthy" or $health.band == "unavailable")
       and ($health["guild.ai"] == "healthy" or $health["guild.ai"] == "degraded" or $health["guild.ai"] == "unavailable")
-      and ($health["replay.io"] == "healthy" or $health["replay.io"] == "degraded")
+      and ($health["replay.io"] == "healthy" or $health["replay.io"] == "degraded" or $health["replay.io"] == "unavailable")
   ' <<<"$integration_health" >/dev/null
 else
   jq -e '

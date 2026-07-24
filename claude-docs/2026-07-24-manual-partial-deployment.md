@@ -19,9 +19,11 @@ through the configured `hostido-dns` integration.
 The user explicitly authorized deployment without every sponsor credential. The
 release therefore sets `EVOX_ALLOW_UNAVAILABLE_SPONSORS=true` and injects only secret
 fields for configured integrations. Pioneer and Senso remain mandatory live gates.
-Replay is configured for browser evidence. Actian, Band, and Guild.ai must report
-`unavailable` (or an explicitly allowed degraded publication status for Guild.ai)
-instead of receiving empty secret values, synthetic behavior, or fallback providers.
+Replay recording is optional and runs only when a valid local key and explicit upload
+authorization are both present. Replay, Actian, Band, and Guild.ai may report
+`unavailable` (or an explicitly allowed degraded status) instead of receiving empty
+secret values, synthetic behavior, or fallback providers. The manual deployment does
+not require local `.env` authentication keys.
 
 Pioneer remains the only model gateway. This decision does not introduce
 CLIProxyAPI, OpenAI, Azure, or any other fallback route.
@@ -44,4 +46,10 @@ The deploy fails closed on source authority, dirty worktrees, missing mandatory
 secrets, mutable or unscanned ECR repositories, unsafe state storage, local tests,
 lint, builds, HIGH/CRITICAL source or image findings, ECS readiness, live health,
 smoke tests, and browser QA. First-release rollback scales the newly created services
-to zero; later releases restore the preceding task definitions.
+to zero; later releases restore the preceding task definitions. Release verification
+uses an explicit fail-fast command chain so a failed live or browser gate cannot be
+masked by Bash command-substitution behavior.
+
+The owner cockpit is rendered dynamically at runtime. This is required because the
+API URL is a server-side runtime setting rather than a build argument; static
+prerendering would permanently bake an empty integration-health state into the image.

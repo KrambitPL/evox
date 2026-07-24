@@ -10,7 +10,7 @@ test("@partial exposes truthful sponsor health and persists a mission", async ({
   await page.getByLabel(/objective/i).fill("Resolve a configured EvoAgentX issue");
   await page.getByLabel(/success criteria/i).fill("Return a cited resolution or escalate");
   await page.getByLabel(/hard constraint/i).fill("Do not change immutable policy");
-  await page.getByRole("button", { name: /create mission/i }).click();
+  await page.getByRole("button", { name: /create governed mission/i }).click();
 
   await expect(page.getByText(/Mission mission-/i)).toBeVisible();
 });

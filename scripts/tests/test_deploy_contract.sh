@@ -42,6 +42,84 @@ grep -q 'variable "cpu_architecture"' "$root_dir/infra/terraform/variables.tf"
 grep -q 'kms_key_id.*aws_kms_key.durable' "$root_dir/infra/terraform/main.tf"
 grep -q 'safe first-deployment resume rejects active partial ECS services' "$deploy_script"
 
+test_verify_release_stops_on_failed_gate() (
+  local deploy_library marker release_output release_status
+  deploy_library=$(mktemp "$root_dir/scripts/deploy-library.XXXXXX")
+  marker=$(mktemp "${TMPDIR:-/tmp}/evox-late-gate.XXXXXX")
+  /bin/rm -f "$marker"
+  trap '/bin/rm -f "$deploy_library" "$marker"' EXIT
+  sed '$d' "$deploy_script" >"$deploy_library"
+
+  export AWS_REGION=test-region-1
+  export EVOX_API_IMAGE_REPOSITORY=registry.test/evox-api
+  export EVOX_WEB_IMAGE_REPOSITORY=registry.test/evox-web
+  export EVOX_TF_STATE_BUCKET=evox-test-state
+  export EVOX_TF_STATE_KEY=production/terraform.tfstate
+  export EVOX_ALLOW_UNAVAILABLE_SPONSORS=true
+  export EVOX_REPLAY_UPLOAD=false
+  # shellcheck source=/dev/null
+  source "$deploy_library"
+  # Assigned by the sourced deploy script.
+  # shellcheck disable=SC2154
+  test "$TF_VAR_available_sponsors" = '["senso"]'
+
+  # Invoked indirectly by the sourced deploy function.
+  # shellcheck disable=SC2329
+  terraform() { printf 'https://evox.example.test\n'; }
+  # Invoked indirectly by the sourced deploy function.
+  # shellcheck disable=SC2329
+  curl() { return 0; }
+  # Invoked indirectly by the sourced deploy function.
+  # shellcheck disable=SC2329
+  make() {
+    if test "${1:-}" = "verify-live"; then
+      return 23
+    fi
+    touch "$marker"
+  }
+  # Invoked indirectly by the sourced deploy function.
+  # shellcheck disable=SC2329
+  pnpm() { touch "$marker"; }
+
+  set +e
+  release_output=$(verify_release 2>/dev/null)
+  release_status=$?
+  set -e
+
+  test "$release_status" -eq 23
+  test -z "$release_output"
+  test ! -e "$marker"
+)
+
+test_verify_release_stops_on_failed_gate
+
+test_partial_live_policy_allows_missing_optional_auth() (
+  local fake_bin output
+  fake_bin=$(mktemp -d "${TMPDIR:-/tmp}/evox-live-policy.XXXXXX")
+  trap '/bin/rm -rf "$fake_bin"' EXIT
+  cat >"$fake_bin/curl" <<'EOF'
+#!/usr/bin/env bash
+case "${*: -1}" in
+  */healthz) printf '{"status":"ready"}\n' ;;
+  */v1/integrations/health)
+    printf '%s\n' '{"services":[{"name":"Pioneer","status":"healthy"},{"name":"Senso","status":"healthy"},{"name":"Actian","status":"unavailable"},{"name":"Band","status":"unavailable"},{"name":"Guild.ai","status":"unavailable"},{"name":"Replay.io","status":"unavailable"}]}'
+    ;;
+  *) exit 1 ;;
+esac
+EOF
+  chmod +x "$fake_bin/curl"
+
+  output=$(
+    PATH="$fake_bin:$PATH" \
+      EVOX_BASE_URL=https://evox.example.test \
+      EVOX_ALLOW_UNAVAILABLE_SPONSORS=true \
+      "$root_dir/scripts/verify_live.sh"
+  )
+  grep -q 'configured integration policy passed' <<<"$output"
+)
+
+test_partial_live_policy_allows_missing_optional_auth
+
 set +e
 output=$(
   AWS_REGION=eu-central-1 \

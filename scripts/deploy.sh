@@ -13,7 +13,7 @@ readonly terraform_dir="$root_dir/infra/terraform"
 readonly environment=${EVOX_DEPLOY_ENVIRONMENT:-production}
 readonly allow_unavailable_sponsors=${EVOX_ALLOW_UNAVAILABLE_SPONSORS:-false}
 if test "$allow_unavailable_sponsors" = "true"; then
-  export TF_VAR_available_sponsors=${TF_VAR_available_sponsors:-'["senso","replay"]'}
+  export TF_VAR_available_sponsors=${TF_VAR_available_sponsors:-'["senso"]'}
 else
   export TF_VAR_available_sponsors=${TF_VAR_available_sponsors:-'["senso","actian","band","guild","replay"]'}
 fi
@@ -315,7 +315,7 @@ rollback() {
 }
 
 verify_release() {
-  local endpoint ready=false
+  local endpoint ready=false verification_status
   endpoint=$(terraform -chdir="$terraform_dir" output -raw public_url)
   for _attempt in {1..60}; do
     if curl --fail --silent --max-time 20 "$endpoint/" >/dev/null \
@@ -326,15 +326,22 @@ verify_release() {
     sleep 10
   done
   test "$ready" = "true" || fail "public endpoint did not become ready: $endpoint"
-  (
-    cd "$root_dir"
-    EVOX_BASE_URL="$endpoint" EVOX_ALLOW_UNAVAILABLE_SPONSORS="$allow_unavailable_sponsors" make verify-live
-    EVOX_BASE_URL="$endpoint" make smoke
-    EVOX_E2E_BASE_URL="$endpoint" pnpm --filter @evox/web test:e2e:partial
-    if test -n "${REPLAY_API_KEY:-}" && test "${EVOX_REPLAY_UPLOAD:-false}" = "true"; then
-      EVOX_E2E_BASE_URL="$endpoint" pnpm --filter @evox/web test:replay:partial
-    fi
-  ) >&2
+  if (
+    cd "$root_dir" \
+      && EVOX_BASE_URL="$endpoint" EVOX_ALLOW_UNAVAILABLE_SPONSORS="$allow_unavailable_sponsors" make verify-live \
+      && EVOX_BASE_URL="$endpoint" make smoke \
+      && EVOX_E2E_BASE_URL="$endpoint" pnpm --filter @evox/web test:e2e:partial \
+      && if test -n "${REPLAY_API_KEY:-}" && test "${EVOX_REPLAY_UPLOAD:-false}" = "true"; then
+        EVOX_E2E_BASE_URL="$endpoint" pnpm --filter @evox/web test:replay:partial
+      else
+        true
+      fi
+  ) >&2; then
+    :
+  else
+    verification_status=$?
+    return "$verification_status"
+  fi
   printf '%s\n' "$endpoint"
 }
 
@@ -381,7 +388,7 @@ main() {
     '(.PIONEER_API_KEY // "") | type == "string" and length > 0'
   if test "$allow_unavailable_sponsors" = "true"; then
     verify_secret_fields "$sponsor_secret_arn" \
-      '[.SENSO_API_KEY, .REPLAY_API_KEY] | all(.[]; type == "string" and length > 0)'
+      '(.SENSO_API_KEY // "") | type == "string" and length > 0'
   else
     verify_secret_fields "$sponsor_secret_arn" \
       '[.SENSO_API_KEY, .ACTIAN_VECTORAI_URL, .ACTIAN_VECTORAI_ACCESS_TOKEN, .EVOX_ACTIAN_OUTCOME_COLLECTION, .EVOX_ACTIAN_VECTOR_SIZE, .EVOX_BAND_AGENT_ID, .EVOX_BAND_API_KEY, .EVOX_BAND_HUMAN_ID, .EVOX_BAND_HUMAN_HANDLE, .GUILD_WORKSPACE_ID, .GUILD_AGENT_ID, .REPLAY_API_KEY] | all(.[]; type == "string" and length > 0)'
