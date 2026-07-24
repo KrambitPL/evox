@@ -1,0 +1,8 @@
+{
+  "release_gate": "independent-release-evaluator",
+  "cases": [
+    {"id": "evoagentx-87", "source_url": "https://github.com/EvoAgentX/EvoAgentX/issues/87", "title": "Add Azure OpenAI API support to litellm"},
+    {"id": "evoagentx-234", "source_url": "https://github.com/EvoAgentX/EvoAgentX/issues/234", "title": "SiliconFlowLLM stream override return type mismatch"},
+    {"id": "evoagentx-238", "source_url": "https://github.com/EvoAgentX/EvoAgentX/issues/238", "title": "McpError import blocks EvoAgentX imports"}
+  ]
+}

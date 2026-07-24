@@ -1,0 +1,98 @@
+[
+  {
+    "id": "evoagentx-90",
+    "source_issue_number": 90,
+    "source_url": "https://github.com/EvoAgentX/EvoAgentX/issues/90",
+    "closed_at": "2025-06-24T01:20:01Z",
+    "title": "[Bug] Missing dependencies in pyproject.toml causing ModuleNotFoundError",
+    "source_excerpt": "Installing from git uses pyproject.toml dependencies; the report names dashscope, textgrad, dspy, googlesearch-python, wikipedia, and mcp as missing from that file.",
+    "expected_disposition": "reproduce_package_metadata_gap",
+    "required_facts": ["The report is about git installation.", "The reported failure is ModuleNotFoundError for dashscope.", "The issue names pyproject.toml and requirements.txt."],
+    "acceptable_citations": ["https://github.com/EvoAgentX/EvoAgentX/issues/90", "https://evoagentx.github.io/EvoAgentX/"],
+    "escalation_behavior": "Escalate if the current package metadata differs from the cited issue; do not claim a dependency is fixed without reproducing the installation path."
+  },
+  {
+    "id": "evoagentx-93",
+    "source_issue_number": 93,
+    "source_url": "https://github.com/EvoAgentX/EvoAgentX/issues/93",
+    "closed_at": "2025-07-03T08:26:08Z",
+    "title": "[Suggestion] Enhance API Docs and Add Tutorials for Custom Benchmarks & Optimizers",
+    "source_excerpt": "The request asks for API documentation and tutorials for custom benchmarks and optimizers.",
+    "expected_disposition": "answer_with_official_documentation",
+    "required_facts": ["The request covers custom benchmarks.", "The request covers custom optimizers.", "The requested remedy is documentation/tutorial material."],
+    "acceptable_citations": ["https://github.com/EvoAgentX/EvoAgentX/issues/93", "https://evoagentx.github.io/EvoAgentX/api/optimizers.html"],
+    "escalation_behavior": "Escalate if the official documentation does not cover the requested extension point; do not invent an API tutorial."
+  },
+  {
+    "id": "evoagentx-102",
+    "source_issue_number": 102,
+    "source_url": "https://github.com/EvoAgentX/EvoAgentX/issues/102",
+    "closed_at": "2025-07-09T07:52:12Z",
+    "title": "[Bug] math_textgrad.py error",
+    "source_excerpt": "The reporter changed math_textgrad.py to use qwen-max-2025-01-25 and qwen3-235b-a22b, then observed TypeError: 'AttributeError' object is not callable.",
+    "expected_disposition": "request_supported_dependency_versions",
+    "required_facts": ["The example is math_textgrad.py.", "The reported exception is TypeError involving AttributeError.", "The report uses Aliyun model configuration."],
+    "acceptable_citations": ["https://github.com/EvoAgentX/EvoAgentX/issues/102", "https://evoagentx.github.io/EvoAgentX/"],
+    "escalation_behavior": "Escalate with the exact EvoAgentX, Python, and dependency versions if reproduction on the documented configuration is inconclusive."
+  },
+  {
+    "id": "evoagentx-112",
+    "source_issue_number": 112,
+    "source_url": "https://github.com/EvoAgentX/EvoAgentX/issues/112",
+    "closed_at": "2025-07-30T05:44:37Z",
+    "title": "Streaming chunk choices list index error",
+    "source_excerpt": "The stream path raises IndexError at chunk.choices[0].delta.content while using OpenAILLM with gpt-4o-mini.",
+    "expected_disposition": "reproduce_streaming_boundary",
+    "required_facts": ["The configured model is gpt-4o-mini.", "Streaming is enabled.", "The traceback identifies chunk.choices[0].delta.content."],
+    "acceptable_citations": ["https://github.com/EvoAgentX/EvoAgentX/issues/112", "https://evoagentx.github.io/EvoAgentX/"],
+    "escalation_behavior": "Escalate with a redacted provider response or stream event shape when a local reproduction cannot demonstrate an empty choices list."
+  },
+  {
+    "id": "evoagentx-199",
+    "source_issue_number": 199,
+    "source_url": "https://github.com/EvoAgentX/EvoAgentX/issues/199",
+    "closed_at": "2025-10-17T14:38:56Z",
+    "title": "[Bug] JSON output parser not properly escaping",
+    "source_excerpt": "The report gives a goal containing the literal substring [:port] and shows a yaml.parser.ParserError from models/base_model.py _parse_json.",
+    "expected_disposition": "reproduce_parser_edge_case",
+    "required_facts": ["The literal substring is [:port].", "The failure is a yaml.parser.ParserError.", "The cited parser location is models/base_model.py _parse_json."],
+    "acceptable_citations": ["https://github.com/EvoAgentX/EvoAgentX/issues/199", "https://evoagentx.github.io/EvoAgentX/"],
+    "escalation_behavior": "Escalate as a parsing and security review if a proposed fix alters parsing semantics beyond the exact reported input."
+  },
+  {
+    "id": "evoagentx-209",
+    "source_issue_number": 209,
+    "source_url": "https://github.com/EvoAgentX/EvoAgentX/issues/209",
+    "closed_at": "2026-01-16T06:37:25Z",
+    "title": "[Question] Can you write a guide about how to manually craft a workgraph?",
+    "source_excerpt": "The user asks how to build a more reliable and controllable multi-agent system rather than using an agent-generated one.",
+    "expected_disposition": "answer_with_official_example",
+    "required_facts": ["The request concerns manually crafted workgraphs.", "The stated aim is reliability and control.", "It is a question, not a reproducible defect."],
+    "acceptable_citations": ["https://github.com/EvoAgentX/EvoAgentX/issues/209", "https://evoagentx.github.io/EvoAgentX/"],
+    "escalation_behavior": "Escalate if no official example supports the requested workflow pattern; do not fabricate a framework-specific guide."
+  },
+  {
+    "id": "evoagentx-212",
+    "source_issue_number": 212,
+    "source_url": "https://github.com/EvoAgentX/EvoAgentX/issues/212",
+    "closed_at": "2026-04-22T07:53:45Z",
+    "title": "[Bug] Official example repeats generated content cyclically",
+    "source_excerpt": "The report uses OpenAILLMConfig with model deepseek-chat and says an official workflow example repeatedly generates the same content.",
+    "expected_disposition": "escalate_provider_compatibility",
+    "required_facts": ["The configured model is deepseek-chat.", "The report describes repeated/cyclic content.", "The reproduction invokes WorkFlowGenerator."],
+    "acceptable_citations": ["https://github.com/EvoAgentX/EvoAgentX/issues/212", "https://evoagentx.github.io/EvoAgentX/"],
+    "escalation_behavior": "Escalate to provider compatibility review when the failure cannot be reproduced with the documented model/provider configuration."
+  },
+  {
+    "id": "evoagentx-213",
+    "source_issue_number": 213,
+    "source_url": "https://github.com/EvoAgentX/EvoAgentX/issues/213",
+    "closed_at": "2026-01-12T03:07:01Z",
+    "title": "[Question] Future optimization algorithms and AlphaEvolve",
+    "source_excerpt": "The user asks about optimizing specific workflows or nodes and whether AlphaEvolve support will be considered.",
+    "expected_disposition": "escalate_product_roadmap",
+    "required_facts": ["The question mentions optimization of workflows or nodes.", "The question mentions AlphaEvolve.", "No concrete bug reproduction is provided."],
+    "acceptable_citations": ["https://github.com/EvoAgentX/EvoAgentX/issues/213", "https://evoagentx.github.io/EvoAgentX/api/optimizers.html"],
+    "escalation_behavior": "Escalate to maintainers for roadmap confirmation; do not promise unannounced algorithm support."
+  }
+]
