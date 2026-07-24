@@ -8,7 +8,8 @@ from hashlib import sha256
 from typing import Annotated, Any
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
-from pydantic_core import PydanticCustomError
+
+from .errors import ImmutablePolicyViolation
 
 Identifier = Annotated[str, StringConstraints(pattern=r"^[a-z][a-z0-9_-]{2,127}$")]
 MissionId = Identifier
@@ -54,6 +55,11 @@ class ReleaseDisposition(StrEnum):
     PROMOTE = "promote"
     REJECT = "reject"
     OWNER_REVIEW = "owner_review"
+
+
+class MutableField(StrEnum):
+    PROMPTS = "prompts"
+    SEQUENTIAL_EDGES = "sequential_edges"
 
 
 class JobType(StrEnum):
@@ -157,7 +163,7 @@ class AgenticSystemSpec(ContractModel):
     models: dict[Identifier, Annotated[str, Field(min_length=1)]]
     prompts: dict[Identifier, Annotated[str, Field(min_length=1)]]
     capability_bindings: dict[Identifier, frozenset[Capability]]
-    mutable_fields: frozenset[Annotated[str, Field(min_length=1)]]
+    mutable_fields: frozenset[MutableField]
     immutable_policy_digest: Annotated[str, StringConstraints(pattern=r"^[a-f0-9]{64}$")]
 
     @model_validator(mode="after")
@@ -181,10 +187,22 @@ class AgenticSystemSpec(ContractModel):
             raise ValueError("mission_id does not match the mission contract.")
         expected_digest = immutable_policy_digest(mission)
         if self.immutable_policy_digest != expected_digest:
-            raise PydanticCustomError(
-                "immutable_policy_digest",
-                "immutable_policy_digest does not match the mission policy.",
-                {"expected_digest": expected_digest},
+            raise ImmutablePolicyViolation(
+                expected_digest=expected_digest,
+                received_digest=self.immutable_policy_digest,
+            )
+        unauthorized_capabilities = frozenset(
+            capability
+            for bindings in self.capability_bindings.values()
+            for capability in bindings - mission.allowed_capabilities
+        )
+        if unauthorized_capabilities:
+            raise ImmutablePolicyViolation(
+                expected_digest=expected_digest,
+                received_digest=self.immutable_policy_digest,
+                unauthorized_capabilities=frozenset(
+                    capability.value for capability in unauthorized_capabilities
+                ),
             )
 
 
@@ -271,17 +289,39 @@ class ReleaseDecision(ContractModel):
     disposition: ReleaseDisposition
     reasons: tuple[Annotated[str, Field(min_length=1)], ...]
     evidence_refs: tuple[Annotated[str, Field(min_length=1)], ...]
+    approved_system_id: SystemId | None = None
     promoted_version: str | None = None
     rollback_version: str | None = None
+    rollback_release_id: ReleaseId | None = None
     immutable_policy_digest: Annotated[str, StringConstraints(pattern=r"^[a-f0-9]{64}$")]
 
     @model_validator(mode="after")
     def require_promotion_receipt(self) -> ReleaseDecision:
         if self.disposition is ReleaseDisposition.PROMOTE and (
-            not self.evidence_refs or not self.promoted_version or not self.rollback_version
+            not self.evidence_refs
+            or not self.approved_system_id
+            or not self.promoted_version
+            or not self.rollback_version
+            or not self.rollback_release_id
         ):
-            raise ValueError("Promotion requires evidence, promoted_version, and rollback_version.")
+            raise ValueError(
+                "Promotion requires evidence, approved_system_id, versions, "
+                "and rollback_release_id."
+            )
         return self
+
+    def validate_publication(self, system: AgenticSystemSpec) -> None:
+        if self.disposition is not ReleaseDisposition.PROMOTE:
+            raise ValueError("Publication requires a promote release decision.")
+        if self.approved_system_id != system.id:
+            raise ValueError(
+                "approved_system_id does not match the system submitted for publication."
+            )
+        if self.immutable_policy_digest != system.immutable_policy_digest:
+            raise ImmutablePolicyViolation(
+                expected_digest=self.immutable_policy_digest,
+                received_digest=system.immutable_policy_digest,
+            )
 
 
 class Job(ContractModel):

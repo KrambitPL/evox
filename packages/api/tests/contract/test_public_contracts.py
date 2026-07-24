@@ -1,6 +1,9 @@
 from datetime import UTC, datetime
 
+import pytest
+
 from evox_api.domain.contracts import (
+    AgenticSystemSpec,
     CandidateDiff,
     CandidateReport,
     EvaluationMetrics,
@@ -11,6 +14,7 @@ from evox_api.domain.contracts import (
     ReleaseDisposition,
     RunOutcome,
     RunStatus,
+    SystemNode,
 )
 
 
@@ -61,12 +65,61 @@ def test_release_decision_requires_evidence_and_rollback_for_promotion() -> None
         disposition=ReleaseDisposition.PROMOTE,
         reasons=("All hard gates passed.",),
         evidence_refs=("s3://evox-reports/candidate_001.json",),
+        approved_system_id="system_issue_resolver_v2",
         promoted_version="2.0.0",
         rollback_version="1.0.0",
+        rollback_release_id="release_000",
         immutable_policy_digest="b" * 64,
     )
 
     assert decision.disposition is ReleaseDisposition.PROMOTE
+
+
+def test_promotion_receipt_binds_the_approved_system_and_rollback_release() -> None:
+    decision = ReleaseDecision(
+        id="release_001",
+        candidate_id="candidate_001",
+        disposition=ReleaseDisposition.PROMOTE,
+        reasons=("All hard gates passed.",),
+        evidence_refs=("s3://evox-reports/candidate_001.json",),
+        approved_system_id="system_issue_resolver_v2",
+        promoted_version="2.0.0",
+        rollback_version="1.0.0",
+        rollback_release_id="release_000",
+        immutable_policy_digest="b" * 64,
+    )
+
+    assert decision.approved_system_id == "system_issue_resolver_v2"
+
+
+def test_publication_gate_rejects_a_release_for_a_different_system() -> None:
+    decision = ReleaseDecision(
+        id="release_001",
+        candidate_id="candidate_001",
+        disposition=ReleaseDisposition.PROMOTE,
+        reasons=("All hard gates passed.",),
+        evidence_refs=("s3://evox-reports/candidate_001.json",),
+        approved_system_id="system_issue_resolver_v2",
+        promoted_version="2.0.0",
+        rollback_version="1.0.0",
+        rollback_release_id="release_000",
+        immutable_policy_digest="b" * 64,
+    )
+    system = AgenticSystemSpec(
+        id="system_issue_resolver_v3",
+        mission_id="mission_issue_resolver",
+        version=3,
+        nodes=(SystemNode(id="retrieve", kind="knowledge"),),
+        edges=(),
+        models={"retrieve": "pioneer-resolver"},
+        prompts={"retrieve": "Find official facts."},
+        capability_bindings={"retrieve": frozenset()},
+        mutable_fields=frozenset(),
+        immutable_policy_digest="b" * 64,
+    )
+
+    with pytest.raises(ValueError, match="approved_system_id"):
+        decision.validate_publication(system)
 
 
 def test_job_is_a_durable_queued_operation_with_explicit_failure_support() -> None:

@@ -11,7 +11,7 @@ class DomainErrorPayload(BaseModel):
     details: dict[str, Any] = Field(default_factory=dict)
 
 
-class DomainError(Exception):
+class DomainError(ValueError):
     def __init__(self, code: str, message: str, details: dict[str, Any] | None = None) -> None:
         self.code = code
         self.message = message
@@ -32,7 +32,23 @@ class IntegrationUnavailable(DomainError):
 
 
 class ImmutablePolicyViolation(DomainError):
-    def __init__(self, expected_digest: str, received_digest: str) -> None:
+    def __init__(
+        self,
+        expected_digest: str,
+        received_digest: str,
+        unauthorized_capabilities: frozenset[str] = frozenset(),
+    ) -> None:
+        if unauthorized_capabilities:
+            super().__init__(
+                code="immutable_policy_violation",
+                message="System capability bindings include unauthorized_capabilities.",
+                details={
+                    "expected_digest": expected_digest,
+                    "received_digest": received_digest,
+                    "unauthorized_capabilities": sorted(unauthorized_capabilities),
+                },
+            )
+            return
         super().__init__(
             code="immutable_policy_violation",
             message="immutable_policy_digest does not match the mission policy.",

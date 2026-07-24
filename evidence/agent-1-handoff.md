@@ -17,6 +17,15 @@ Green verification:
 - `pnpm install --frozen-lockfile` — completed successfully.
 - `git diff --check` — completed successfully.
 
+Review remediation verification:
+
+- `uv run --package evox-api pytest packages/api/tests/contract` initially failed because the publication release gate was absent.
+- `make test-unit` — 18 passed.
+- `make test-contract` — 18 passed.
+- `make lint` — all checks passed.
+
+The contract now rejects capabilities outside mission authority, limits mutation targets to `prompts` and `sequential_edges`, requires an approved release bound to its system before publication, serializes immutable-policy violations as `409`, and scopes Senso/Actian port calls by tenant and filters.
+
 Concerns:
 
 - The API skeleton intentionally fails closed with a structured `503` until the persistence, queue, and sponsor adapter lanes provide configured real integrations.

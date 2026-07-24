@@ -11,10 +11,12 @@ from evox_api.domain.contracts import (
     EvaluationSplit,
     HitlPolicy,
     MissionContract,
+    MutableField,
     ResolutionDisposition,
     SystemNode,
     immutable_policy_digest,
 )
+from evox_api.domain.errors import ImmutablePolicyViolation
 
 
 def mission() -> MissionContract:
@@ -52,12 +54,49 @@ def test_system_rejects_an_immutable_policy_digest_that_does_not_match_its_missi
         models={"retrieve": "pioneer-resolver"},
         prompts={"retrieve": "Find official facts."},
         capability_bindings={"retrieve": frozenset({Capability.KNOWLEDGE_RETRIEVAL})},
-        mutable_fields=frozenset({"prompts.retrieve"}),
+        mutable_fields=frozenset({MutableField.PROMPTS}),
         immutable_policy_digest="0" * 64,
     )
 
     with pytest.raises(ValueError, match="immutable_policy_digest"):
         system.validate_against(frozen_mission)
+
+
+def test_system_rejects_capabilities_not_allowed_by_its_mission() -> None:
+    frozen_mission = mission()
+    system = AgenticSystemSpec(
+        id="system_issue_resolver_v1",
+        mission_id=frozen_mission.id,
+        version=1,
+        nodes=(SystemNode(id="retrieve", kind="knowledge"),),
+        edges=(),
+        models={"retrieve": "pioneer-resolver"},
+        prompts={"retrieve": "Find official facts."},
+        capability_bindings={"retrieve": frozenset({Capability.PUBLICATION})},
+        mutable_fields=frozenset({MutableField.PROMPTS}),
+        immutable_policy_digest=immutable_policy_digest(frozen_mission),
+    )
+
+    with pytest.raises(ImmutablePolicyViolation, match="unauthorized_capabilities"):
+        system.validate_against(frozen_mission)
+
+
+def test_system_accepts_only_approved_evolution_targets() -> None:
+    frozen_mission = mission()
+
+    with pytest.raises(ValueError, match="mutable_fields"):
+        AgenticSystemSpec(
+            id="system_issue_resolver_v1",
+            mission_id=frozen_mission.id,
+            version=1,
+            nodes=(SystemNode(id="retrieve", kind="knowledge"),),
+            edges=(),
+            models={"retrieve": "pioneer-resolver"},
+            prompts={"retrieve": "Find official facts."},
+            capability_bindings={"retrieve": frozenset({Capability.KNOWLEDGE_RETRIEVAL})},
+            mutable_fields=frozenset({"capability_bindings"}),
+            immutable_policy_digest=immutable_policy_digest(frozen_mission),
+        )
 
 
 def test_evaluation_case_keeps_literal_expected_evidence_and_hard_gates() -> None:

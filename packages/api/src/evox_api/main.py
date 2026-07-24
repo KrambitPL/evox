@@ -9,7 +9,7 @@ from evox_api.domain.contracts import (
     MissionContract,
     RunOutcome,
 )
-from evox_api.domain.errors import DomainError, IntegrationUnavailable
+from evox_api.domain.errors import DomainError, ImmutablePolicyViolation, IntegrationUnavailable
 
 
 def create_app() -> FastAPI:
@@ -91,8 +91,13 @@ def create_app() -> FastAPI:
 
 
 async def domain_error_response(_: Request, error: DomainError) -> JSONResponse:
+    response_status = (
+        status.HTTP_409_CONFLICT
+        if isinstance(error, ImmutablePolicyViolation)
+        else status.HTTP_503_SERVICE_UNAVAILABLE
+    )
     return JSONResponse(
-        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        status_code=response_status,
         content=error.payload().model_dump(mode="json"),
     )
 
