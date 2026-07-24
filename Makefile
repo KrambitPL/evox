@@ -26,8 +26,7 @@ lint:
 	uv run --package evox-api ruff check packages/api/src packages/api/tests
 
 build:
-	@echo "Web build is not implemented yet; run the agent-11 web lane first." >&2
-	@exit 2
+	pnpm --filter @evox/web build
 
 verify-live:
 	@echo "Live sponsor verification is not implemented yet; run the agent-15 live QA lane first." >&2
