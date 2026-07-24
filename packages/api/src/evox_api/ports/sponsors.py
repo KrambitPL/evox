@@ -42,10 +42,28 @@ class EscalationPort(Protocol):
     async def escalate(self, run: RunOutcome) -> str: ...
 
 
-class PublicationPort(Protocol):
-    async def publish(self, release: ReleaseDecision, system: AgenticSystemSpec) -> str: ...
+@dataclass(frozen=True)
+class PublicationReceipt:
+    """The reconciled active publication state returned by PublicationPort."""
 
-    async def rollback(self, release_id: str) -> None: ...
+    release_id: str
+    active_version: str
+    rollback_release_id: str | None
+    rolled_back_from_release_id: str | None = None
+
+
+class PublicationPort(Protocol):
+    async def publish(
+        self, release: ReleaseDecision, system: AgenticSystemSpec
+    ) -> PublicationReceipt: ...
+
+    async def reconcile(
+        self, release: ReleaseDecision, system: AgenticSystemSpec
+    ) -> PublicationReceipt: ...
+
+    async def rollback(
+        self, release: ReleaseDecision, system: AgenticSystemSpec
+    ) -> PublicationReceipt: ...
 
 
 class QaEvidencePort(Protocol):

@@ -7,6 +7,7 @@ from evox_api.ports import (
     ModelGateway,
     OutcomeMemoryPort,
     PublicationPort,
+    PublicationReceipt,
     QaEvidencePort,
     QueueBoundary,
     WorkflowEngine,
@@ -43,3 +44,15 @@ def test_tenant_scoped_knowledge_and_memory_ports_require_filters() -> None:
 
     assert {"tenant_id", "filters"} <= set(knowledge_parameters)
     assert {"tenant_id", "filters"} <= set(memory_parameters)
+
+
+def test_publication_port_returns_a_typed_reconciled_receipt() -> None:
+    publish_parameters = signature(PublicationPort.publish).parameters
+
+    assert {"release", "system"} <= set(publish_parameters)
+    assert PublicationReceipt.__annotations__ == {
+        "release_id": str,
+        "active_version": str,
+        "rollback_release_id": str | None,
+        "rolled_back_from_release_id": str | None,
+    }
