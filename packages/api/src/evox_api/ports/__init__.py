@@ -14,6 +14,7 @@ from .sponsors import (
     ModelGateway,
     OutcomeMemoryPort,
     PublicationPort,
+    PublicationReceipt,
     QaEvidencePort,
 )
 from .workflow import WorkflowEngine
@@ -28,6 +29,7 @@ __all__ = [
     "ModelGateway",
     "OutcomeMemoryPort",
     "OutcomeRepository",
+    "PublicationReceipt",
     "PublicationPort",
     "QaEvidencePort",
     "QueueBoundary",
