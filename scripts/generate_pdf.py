@@ -14,9 +14,7 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 def add_sponsor_slide_to_pptx(pptx_path="outputs/evox-simple-explainer.pptx"):
     prs = pptx.Presentation(pptx_path)
     
-    # Check if slide 6 already exists or if we should add/update it
     if len(prs.slides) >= 6:
-        # Re-create presentation from clean base if needed, or simply work with 6th slide
         slide = prs.slides[5]
         for shape in list(slide.shapes):
             sp = shape._element
@@ -60,7 +58,7 @@ def add_sponsor_slide_to_pptx(pptx_path="outputs/evox-simple-explainer.pptx"):
     tf_title = tb_title.text_frame
     tf_title.word_wrap = True
     p_title = tf_title.paragraphs[0]
-    p_title.text = "Every sponsor technology sits behind a production port."
+    p_title.text = "Every sponsor technology is integrated via concrete API adapters."
     p_title.font.name = "Aptos"
     p_title.font.size = Pt(24)
     p_title.font.bold = True
@@ -70,27 +68,57 @@ def add_sponsor_slide_to_pptx(pptx_path="outputs/evox-simple-explainer.pptx"):
     tf_sub = tb_sub.text_frame
     tf_sub.word_wrap = True
     p_sub = tf_sub.paragraphs[0]
-    p_sub.text = "Real persisted state and configured integrations power the entire learning loop."
+    p_sub.text = "Real persisted state and configured endpoints power every stage of the Evox governance engine."
     p_sub.font.name = "Aptos"
     p_sub.font.size = Pt(14)
     p_sub.font.color.rgb = c_slate
 
-    # Sponsor cards (5 items)
+    # Sponsor cards (5 items with concrete technical implementation details)
     sponsors = [
-        ("PIONEER", "Model Gateway", "Production gateway for model execution and prompt inference.", c_blue),
-        ("SENSO", "Knowledge Layer", "Ingests documentation and provides cited context retrieval.", c_purple),
-        ("ACTIAN VECTORAI", "Outcome Memory", "Stores searchable run outcomes, trajectories, and failure patterns.", c_green),
-        ("BAND", "Human Escalation", "Carries remote human interventions and correlated response events.", c_orange),
-        ("GUILD.AI", "Release Governance", "Publishes and governs active production releases and candidate models.", c_navy),
+        (
+            "PIONEER",
+            "Model Gateway Adapter",
+            "evox_api.adapters.pioneer",
+            "Wraps the Pioneer REST gateway. Validates model readiness, routes prompt execution, and enforces fail-closed model resolution.",
+            c_blue
+        ),
+        (
+            "SENSO",
+            "Cited Document Context",
+            "evox_api.adapters.senso",
+            "Connects to Senso org API to ingest corpus documents and retrieve exact cited text snippets for agent reasoning.",
+            c_purple
+        ),
+        (
+            "ACTIAN VECTORAI",
+            "Outcome Memory Store",
+            "evox_api.adapters.actian",
+            "Connects to Actian VectorAI vector DB to index run trajectories and query past failure/success patterns.",
+            c_green
+        ),
+        (
+            "BAND",
+            "Human Escalation Bridge",
+            "evox_api.adapters.band",
+            "Uses Band AsyncRestClient to create escalation tasks, poll worker feedback, and deliver human decisions back into jobs.",
+            c_orange
+        ),
+        (
+            "GUILD.AI",
+            "Release Publisher",
+            "evox_api.adapters.guild",
+            "Publishes proven candidate workflows to Guild.ai workspace, locking active release versions and evaluator rules.",
+            c_navy
+        ),
     ]
 
     card_width = Inches(2.2)
     card_gap = Inches(0.2)
     start_left = Inches(0.75)
     card_top = Inches(2.1)
-    card_height = Inches(4.2)
+    card_height = Inches(4.3)
 
-    for i, (name, role, desc, color) in enumerate(sponsors):
+    for i, (name, role, module, desc, color) in enumerate(sponsors):
         left = start_left + i * (card_width + card_gap)
         
         # Background shape
@@ -101,44 +129,51 @@ def add_sponsor_slide_to_pptx(pptx_path="outputs/evox-simple-explainer.pptx"):
         shape.line.width = Pt(1.5)
 
         # Content inside card
-        tb_card = slide.shapes.add_textbox(left + Inches(0.12), card_top + Inches(0.15), card_width - Inches(0.24), card_height - Inches(0.3))
+        tb_card = slide.shapes.add_textbox(left + Inches(0.1), card_top + Inches(0.12), card_width - Inches(0.2), card_height - Inches(0.24))
         tf_card = tb_card.text_frame
         tf_card.word_wrap = True
         
         p1 = tf_card.paragraphs[0]
         p1.text = name
         p1.font.name = "Aptos"
-        p1.font.size = Pt(13)
+        p1.font.size = Pt(12.5)
         p1.font.bold = True
         p1.font.color.rgb = color
-        p1.space_after = Pt(4)
+        p1.space_after = Pt(2)
 
         p2 = tf_card.add_paragraph()
         p2.text = role
         p2.font.name = "Aptos"
-        p2.font.size = Pt(11)
+        p2.font.size = Pt(10.5)
         p2.font.bold = True
         p2.font.color.rgb = c_navy
-        p2.space_after = Pt(12)
+        p2.space_after = Pt(2)
 
         p3 = tf_card.add_paragraph()
-        p3.text = desc
-        p3.font.name = "Aptos"
-        p3.font.size = Pt(10.5)
+        p3.text = module
+        p3.font.name = "Courier New"
+        p3.font.size = Pt(8.5)
         p3.font.color.rgb = c_slate
+        p3.space_after = Pt(8)
+
+        p4 = tf_card.add_paragraph()
+        p4.text = desc
+        p4.font.name = "Aptos"
+        p4.font.size = Pt(9.5)
+        p4.font.color.rgb = c_slate
 
     # Presenter Notes
     slide.notes_slide.notes_text_frame.text = (
-        "Sponsor Integration Architecture:\n"
-        "- Pioneer handles model execution fail-closed behind a clean gateway.\n"
-        "- Senso provides indexed documentation and cited context retrieval.\n"
-        "- Actian VectorAI stores execution trajectories and failure patterns for fast similarity search.\n"
-        "- Band routes uncertain decisions to real human reviewers.\n"
-        "- Guild.ai governs active release promotion and system publication."
+        "Concrete Sponsor Integration Architecture:\n"
+        "- evox_api.adapters.pioneer: PioneerModelGateway handles model execution and health checks.\n"
+        "- evox_api.adapters.senso: SensoAdapter ingests docs and retrieves cited evidence for agent steps.\n"
+        "- evox_api.adapters.actian: ActianOutcomeMemorySettings connects to VectorAI for trajectory indexing.\n"
+        "- evox_api.adapters.band: EscalationConfig & AsyncRestClient dispatch human approval requests.\n"
+        "- evox_api.adapters.guild: GuildSettings verifies agent workspace publication & version governance."
     )
 
     prs.save(pptx_path)
-    print("Updated PPTX:", pptx_path)
+    print("Updated PPTX with detailed sponsor integration:", pptx_path)
 
 def update_pdf(pdf_path="outputs/evox-simple-explainer.pdf"):
     page_width = 13.33 * 72
@@ -208,8 +243,8 @@ def update_pdf(pdf_path="outputs/evox-simple-explainer.pdf"):
         'BoxHeader',
         parent=styles['Normal'],
         fontName='Helvetica-Bold',
-        fontSize=14,
-        leading=18,
+        fontSize=13,
+        leading=16,
         textColor=c_navy,
         alignment=1
     )
@@ -218,8 +253,18 @@ def update_pdf(pdf_path="outputs/evox-simple-explainer.pdf"):
         'BoxBody',
         parent=styles['Normal'],
         fontName='Helvetica',
-        fontSize=11,
-        leading=15,
+        fontSize=10,
+        leading=13.5,
+        textColor=c_slate,
+        alignment=1
+    )
+
+    code_style = ParagraphStyle(
+        'CodeText',
+        parent=styles['Normal'],
+        fontName='Courier-Oblique',
+        fontSize=8.5,
+        leading=11,
         textColor=c_slate,
         alignment=1
     )
@@ -246,8 +291,8 @@ def update_pdf(pdf_path="outputs/evox-simple-explainer.pdf"):
         'BottomNote',
         parent=styles['Normal'],
         fontName='Helvetica-Oblique',
-        fontSize=13,
-        leading=17,
+        fontSize=12.5,
+        leading=16,
         textColor=c_slate,
         alignment=1
     )
@@ -503,50 +548,55 @@ def update_pdf(pdf_path="outputs/evox-simple-explainer.pdf"):
     ]))
     story.append(guardrail_box)
 
-    # ---------------- SLIDE 6 (NEW: SPONSOR INTEGRATION) ----------------
+    # ---------------- SLIDE 6 (CONCRETE SPONSOR INTEGRATION DETAILS) ----------------
     story.append(PageBreak())
     story.append(make_header(6))
     story.append(Spacer(1, 10))
-    story.append(HRFlowable(width="100%", thickness=1, color=c_light_gray, spaceBefore=5, spaceAfter=20))
+    story.append(HRFlowable(width="100%", thickness=1, color=c_light_gray, spaceBefore=5, spaceAfter=18))
 
-    story.append(Paragraph("Every sponsor technology sits behind a production port.", title_style))
-    story.append(Spacer(1, 10))
-    story.append(Paragraph("Real persisted state and configured integrations power the entire learning loop.", subtitle_style))
-    story.append(Spacer(1, 30))
+    story.append(Paragraph("Every sponsor technology is integrated via concrete API adapters.", title_style))
+    story.append(Spacer(1, 8))
+    story.append(Paragraph("Real persisted state and configured endpoints power every stage of the Evox governance engine.", subtitle_style))
+    story.append(Spacer(1, 20))
 
     card_pioneer = [
         Paragraph("<b>PIONEER</b>", ParagraphStyle('CP1', parent=box_header_style, textColor=c_blue)),
-        Paragraph("Model Gateway", ParagraphStyle('CR1', parent=box_header_style, textColor=c_navy, fontSize=12)),
-        Spacer(1, 8),
-        Paragraph("Production gateway for model execution and prompt inference.", box_body_style)
+        Paragraph("Model Gateway Adapter", ParagraphStyle('CR1', parent=box_header_style, textColor=c_navy, fontSize=11)),
+        Paragraph("evox_api.adapters.pioneer", code_style),
+        Spacer(1, 6),
+        Paragraph("Wraps Pioneer REST gateway. Validates model readiness, routes prompt execution, and enforces fail-closed model resolution.", box_body_style)
     ]
 
     card_senso = [
         Paragraph("<b>SENSO</b>", ParagraphStyle('CP2', parent=box_header_style, textColor=c_purple)),
-        Paragraph("Knowledge Layer", ParagraphStyle('CR2', parent=box_header_style, textColor=c_navy, fontSize=12)),
-        Spacer(1, 8),
-        Paragraph("Ingests documentation and provides cited context retrieval.", box_body_style)
+        Paragraph("Cited Context Adapter", ParagraphStyle('CR2', parent=box_header_style, textColor=c_navy, fontSize=11)),
+        Paragraph("evox_api.adapters.senso", code_style),
+        Spacer(1, 6),
+        Paragraph("Connects to Senso org API to ingest corpus documents and retrieve exact cited text snippets for agent reasoning.", box_body_style)
     ]
 
     card_actian = [
         Paragraph("<b>ACTIAN VECTORAI</b>", ParagraphStyle('CP3', parent=box_header_style, textColor=c_green)),
-        Paragraph("Outcome Memory", ParagraphStyle('CR3', parent=box_header_style, textColor=c_navy, fontSize=12)),
-        Spacer(1, 8),
-        Paragraph("Stores searchable run outcomes, trajectories, and failure patterns.", box_body_style)
+        Paragraph("Outcome Memory Store", ParagraphStyle('CR3', parent=box_header_style, textColor=c_navy, fontSize=11)),
+        Paragraph("evox_api.adapters.actian", code_style),
+        Spacer(1, 6),
+        Paragraph("Connects to Actian VectorAI vector DB to index run trajectories and query past failure/success patterns.", box_body_style)
     ]
 
     card_band = [
         Paragraph("<b>BAND</b>", ParagraphStyle('CP4', parent=box_header_style, textColor=c_orange)),
-        Paragraph("Human Escalation", ParagraphStyle('CR4', parent=box_header_style, textColor=c_navy, fontSize=12)),
-        Spacer(1, 8),
-        Paragraph("Carries remote human interventions and correlated response events.", box_body_style)
+        Paragraph("Human Escalation Bridge", ParagraphStyle('CR4', parent=box_header_style, textColor=c_navy, fontSize=11)),
+        Paragraph("evox_api.adapters.band", code_style),
+        Spacer(1, 6),
+        Paragraph("Uses Band AsyncRestClient to create escalation tasks, poll worker feedback, and deliver human decisions back into jobs.", box_body_style)
     ]
 
     card_guild = [
         Paragraph("<b>GUILD.AI</b>", ParagraphStyle('CP5', parent=box_header_style, textColor=c_navy)),
-        Paragraph("Release Governance", ParagraphStyle('CR5', parent=box_header_style, textColor=c_navy, fontSize=12)),
-        Spacer(1, 8),
-        Paragraph("Publishes and governs active production releases and candidate models.", box_body_style)
+        Paragraph("Release Publisher", ParagraphStyle('CR5', parent=box_header_style, textColor=c_navy, fontSize=11)),
+        Paragraph("evox_api.adapters.guild", code_style),
+        Spacer(1, 6),
+        Paragraph("Publishes proven candidate workflows to Guild.ai workspace, locking active release versions and evaluator rules.", box_body_style)
     ]
 
     sponsors_grid = Table([[card_pioneer, card_senso, card_actian, card_band, card_guild]], colWidths=[162, 162, 162, 162, 162])
@@ -562,14 +612,14 @@ def update_pdf(pdf_path="outputs/evox-simple-explainer.pdf"):
         ('BACKGROUND', (4,0), (4,0), colors.HexColor('#F8FAFC')),
         ('BOX', (4,0), (4,0), 1, c_navy),
         ('VALIGN', (0,0), (-1,-1), 'TOP'),
-        ('TOPPADDING', (0,0), (-1,-1), 16),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 16),
-        ('LEFTPADDING', (0,0), (-1,-1), 8),
-        ('RIGHTPADDING', (0,0), (-1,-1), 8),
+        ('TOPPADDING', (0,0), (-1,-1), 14),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 14),
+        ('LEFTPADDING', (0,0), (-1,-1), 6),
+        ('RIGHTPADDING', (0,0), (-1,-1), 6),
     ]))
 
     story.append(sponsors_grid)
-    story.append(Spacer(1, 35))
+    story.append(Spacer(1, 25))
     story.append(Paragraph("Integrations are fail-closed with real persisted state — no synthetic or mock fallbacks in production paths.", bottom_note_style))
 
     doc.build(story)

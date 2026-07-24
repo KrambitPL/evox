@@ -15,7 +15,7 @@ The deck reduces Evox to one causal sequence:
 3. Every result is measured against the same success criteria.
 4. Outcomes become evidence for a new candidate.
 5. A candidate becomes active only when it proves better without changing the rules.
-6. Every sponsor technology (Pioneer, Senso, Actian VectorAI, Band, Guild.ai) sits behind clean production ports.
+6. Every sponsor technology is integrated via concrete API adapters (`evox_api.adapters.pioneer`, `senso`, `actian`, `band`, `guild`).
 
 The closing distinction is: the system learns how to work; the owner keeps control of what “better” means.
 
