@@ -224,7 +224,16 @@ capture_previous_task_definitions() {
     printf '[]\n'
     return
   fi
-  test "$count" -eq 3 && test "$failures" -eq 0 || fail "safe rollback rejects a partial ECS service set"
+  if test "$count" -ne 3 || test "$failures" -ne 0; then
+    test "$((count + failures))" -eq 3 \
+      && test "$(printf '%s' "$response" | jq '[.failures[].reason == "MISSING"] | all')" = "true" \
+      || fail "safe rollback rejects an inconsistent partial ECS service set"
+    active_count=$(printf '%s' "$response" | jq '[.services[] | select(.desiredCount > 0)] | length')
+    test "$active_count" -eq 0 \
+      || fail "safe first-deployment resume rejects active partial ECS services"
+    printf '[]\n'
+    return
+  fi
   response=$(printf '%s' "$response" | jq '[.services[] | {service: .serviceName, taskDefinition, desiredCount}]')
   if test "$count" -eq 3; then
     active_count=$(printf '%s' "$response" | jq '[.[] | select(.desiredCount > 0)] | length')

@@ -39,6 +39,8 @@ grep -q 'REPLAY_API_KEY' "$root_dir/infra/terraform/compute.tf"
 grep -q 'EVOX_API_BASE_URL' "$root_dir/infra/terraform/compute.tf"
 grep -q 'EVOX_CONTAINER_PLATFORM' "$deploy_script"
 grep -q 'variable "cpu_architecture"' "$root_dir/infra/terraform/variables.tf"
+grep -q 'kms_key_id.*aws_kms_key.durable' "$root_dir/infra/terraform/main.tf"
+grep -q 'safe first-deployment resume rejects active partial ECS services' "$deploy_script"
 
 set +e
 output=$(

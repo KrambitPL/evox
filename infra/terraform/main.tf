@@ -117,10 +117,22 @@ resource "aws_sqs_queue" "jobs" {
 
 resource "aws_efs_file_system" "durable" {
   encrypted       = true
+  kms_key_id      = aws_kms_key.durable.arn
   throughput_mode = "elastic"
   lifecycle_policy {
     transition_to_ia = "AFTER_30_DAYS"
   }
+}
+
+resource "aws_kms_key" "durable" {
+  description             = "Evox ${var.environment} durable worker storage encryption"
+  enable_key_rotation     = true
+  deletion_window_in_days = 30
+}
+
+resource "aws_kms_alias" "durable" {
+  name          = "alias/${local.name}-durable"
+  target_key_id = aws_kms_key.durable.key_id
 }
 
 resource "aws_efs_backup_policy" "durable" {
