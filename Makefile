@@ -15,12 +15,12 @@ test-integration:
 	@exit 2
 
 e2e:
-	@echo "End-to-end tests are not implemented yet; run the agent-11 web lane first." >&2
-	@exit 2
+	pnpm --filter @evox/web test:e2e
 
 test-replay:
-	@echo "Replay verification is not implemented yet; run the agent-13 browser QA lane first." >&2
-	@exit 2
+	@test -n "$$REPLAY_API_KEY" || (echo "REPLAY_API_KEY is required for Replay upload." >&2; exit 2)
+	@test "$${EVOX_REPLAY_UPLOAD:-}" = "true" || (echo "Set EVOX_REPLAY_UPLOAD=true to authorize Replay recording upload." >&2; exit 2)
+	pnpm --filter @evox/web test:replay
 
 lint:
 	uv run --package evox-api ruff check packages/api/src packages/api/tests
