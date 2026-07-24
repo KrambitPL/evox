@@ -1,4 +1,4 @@
-.PHONY: install test-unit test-contract test-integration e2e test-replay lint build verify-live smoke deploy
+.PHONY: install test-unit test-contract test-integration e2e test-replay lint build infra-check verify-live smoke deploy
 
 install:
 	uv sync --all-packages --all-groups
@@ -28,6 +28,13 @@ lint:
 build:
 	pnpm --filter @evox/web build
 
+infra-check:
+	terraform -chdir=infra/terraform fmt -check -recursive
+	terraform -chdir=infra/terraform init -backend=false -input=false
+	terraform -chdir=infra/terraform validate
+	shellcheck scripts/deploy.sh scripts/tests/test_deploy_contract.sh
+	./scripts/tests/test_deploy_contract.sh
+
 verify-live:
 	@echo "Live sponsor verification is not implemented yet; run the agent-15 live QA lane first." >&2
 	@exit 2
@@ -37,5 +44,4 @@ smoke:
 	@exit 2
 
 deploy:
-	@echo "Deployment is not implemented yet; run the agent-12 infrastructure lane first." >&2
-	@exit 2
+	./scripts/deploy.sh
