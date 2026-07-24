@@ -174,7 +174,7 @@ build_or_reuse_image() {
   if image_exists "$uri" "$revision"; then
     docker pull --platform "$container_platform" "$image" >/dev/null
   else
-    docker buildx build --platform "$container_platform" --pull --no-cache --load \
+    docker buildx build --platform "$container_platform" --provenance=false --pull --no-cache --load \
       --build-arg "REVISION=$revision" --tag "$image" --file "$root_dir/$dockerfile" "$root_dir"
   fi
 

@@ -41,6 +41,9 @@ The release publishes native `linux/arm64` images and declares matching `ARM64`
 Fargate runtime platforms. The deploy contract validates that image and task
 architectures agree; this avoids unreliable cross-architecture emulation on the
 ARM64 release host while preserving immutable digests and the same security gates.
+BuildKit provenance attestations are disabled for these ECR artifacts so each tag is
+a single scannable image manifest rather than an OCI image index unsupported by ECR's
+basic scanner. Source revision labels and immutable digest identity remain enforced.
 
 The deploy fails closed on source authority, dirty worktrees, missing mandatory
 secrets, mutable or unscanned ECR repositories, unsafe state storage, local tests,

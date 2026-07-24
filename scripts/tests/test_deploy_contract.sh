@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Test-specific exports are intentionally isolated by subshell test functions.
+# shellcheck disable=SC2030,SC2031
 set -euo pipefail
 
 root_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
@@ -92,6 +94,45 @@ test_verify_release_stops_on_failed_gate() (
 )
 
 test_verify_release_stops_on_failed_gate
+
+test_image_build_disables_unscannable_oci_index() (
+  local build_args deploy_library revision
+  deploy_library=$(mktemp "$root_dir/scripts/deploy-library.XXXXXX")
+  build_args=$(mktemp "${TMPDIR:-/tmp}/evox-build-args.XXXXXX")
+  revision=0000000000000000000000000000000000000000
+  trap '/bin/rm -f "$deploy_library" "$build_args"' EXIT
+  sed '$d' "$deploy_script" >"$deploy_library"
+
+  export AWS_REGION=test-region-1
+  export EVOX_API_IMAGE_REPOSITORY=registry.test/evox-api
+  export EVOX_WEB_IMAGE_REPOSITORY=registry.test/evox-web
+  export EVOX_TF_STATE_BUCKET=evox-test-state
+  export EVOX_TF_STATE_KEY=production/terraform.tfstate
+  export EVOX_ALLOW_UNAVAILABLE_SPONSORS=true
+  # shellcheck source=/dev/null
+  source "$deploy_library"
+
+  # Invoked indirectly by the sourced deploy function.
+  # shellcheck disable=SC2329
+  image_exists() { return 1; }
+  # Invoked indirectly by the sourced deploy function.
+  # shellcheck disable=SC2329
+  docker() {
+    case "${1:-} ${2:-}" in
+      'buildx build') printf '%s\n' "$*" >"$build_args" ;;
+      'image inspect') printf '%s\n' "$revision" ;;
+      *) return 0 ;;
+    esac
+  }
+  # Invoked indirectly by the sourced deploy function.
+  # shellcheck disable=SC2329
+  trivy() { return 0; }
+
+  build_or_reuse_image registry.test/evox-web Dockerfile.web "$revision"
+  grep -q -- '--provenance=false' "$build_args"
+)
+
+test_image_build_disables_unscannable_oci_index
 
 test_partial_live_policy_allows_missing_optional_auth() (
   local fake_bin output
