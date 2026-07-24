@@ -1,17 +1,151 @@
 import sys
+import pptx
+from pptx.util import Inches, Pt
+from pptx.enum.shapes import MSO_SHAPE
+from pptx.dml.color import RGBColor
+from pptx.enum.text import PP_ALIGN
+
 from reportlab.lib.pagesizes import landscape, letter
 from reportlab.lib import colors
 from reportlab.lib.units import inch
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable, PageBreak
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 
-def build_pdf(filename="outputs/evox-simple-explainer.pdf"):
-    # 16:9 Landscape page dimensions (13.33 x 7.5 inches = 960 x 540 pt)
+def add_sponsor_slide_to_pptx(pptx_path="outputs/evox-simple-explainer.pptx"):
+    prs = pptx.Presentation(pptx_path)
+    
+    # Check if slide 6 already exists or if we should add/update it
+    if len(prs.slides) >= 6:
+        # Re-create presentation from clean base if needed, or simply work with 6th slide
+        slide = prs.slides[5]
+        for shape in list(slide.shapes):
+            sp = shape._element
+            sp.getparent().remove(sp)
+    else:
+        slide = prs.slides.add_slide(prs.slide_layouts[0])
+        for shape in list(slide.shapes):
+            sp = shape._element
+            sp.getparent().remove(sp)
+
+    # Colors
+    c_navy = RGBColor(15, 23, 42)
+    c_slate = RGBColor(71, 85, 105)
+    c_blue = RGBColor(37, 99, 235)
+    c_green = RGBColor(22, 163, 74)
+    c_orange = RGBColor(234, 88, 12)
+    c_purple = RGBColor(147, 51, 234)
+
+    # Header
+    tb_hdr = slide.shapes.add_textbox(Inches(0.75), Inches(0.4), Inches(11.83), Inches(0.4))
+    tf_hdr = tb_hdr.text_frame
+    p_hdr = tf_hdr.paragraphs[0]
+    p_hdr.text = "EVOX"
+    p_hdr.font.name = "Aptos"
+    p_hdr.font.size = Pt(12)
+    p_hdr.font.bold = True
+    p_hdr.font.color.rgb = c_navy
+
+    tb_page = slide.shapes.add_textbox(Inches(10.58), Inches(0.4), Inches(2.0), Inches(0.4))
+    tf_page = tb_page.text_frame
+    p_page = tf_page.paragraphs[0]
+    p_page.text = "06 / 06"
+    p_page.alignment = PP_ALIGN.RIGHT
+    p_page.font.name = "Aptos"
+    p_page.font.size = Pt(12)
+    p_page.font.bold = True
+    p_page.font.color.rgb = c_slate
+
+    # Title & Subtitle
+    tb_title = slide.shapes.add_textbox(Inches(0.75), Inches(0.85), Inches(11.83), Inches(0.6))
+    tf_title = tb_title.text_frame
+    tf_title.word_wrap = True
+    p_title = tf_title.paragraphs[0]
+    p_title.text = "Every sponsor technology sits behind a production port."
+    p_title.font.name = "Aptos"
+    p_title.font.size = Pt(24)
+    p_title.font.bold = True
+    p_title.font.color.rgb = c_navy
+
+    tb_sub = slide.shapes.add_textbox(Inches(0.75), Inches(1.45), Inches(11.83), Inches(0.5))
+    tf_sub = tb_sub.text_frame
+    tf_sub.word_wrap = True
+    p_sub = tf_sub.paragraphs[0]
+    p_sub.text = "Real persisted state and configured integrations power the entire learning loop."
+    p_sub.font.name = "Aptos"
+    p_sub.font.size = Pt(14)
+    p_sub.font.color.rgb = c_slate
+
+    # Sponsor cards (5 items)
+    sponsors = [
+        ("PIONEER", "Model Gateway", "Production gateway for model execution and prompt inference.", c_blue),
+        ("SENSO", "Knowledge Layer", "Ingests documentation and provides cited context retrieval.", c_purple),
+        ("ACTIAN VECTORAI", "Outcome Memory", "Stores searchable run outcomes, trajectories, and failure patterns.", c_green),
+        ("BAND", "Human Escalation", "Carries remote human interventions and correlated response events.", c_orange),
+        ("GUILD.AI", "Release Governance", "Publishes and governs active production releases and candidate models.", c_navy),
+    ]
+
+    card_width = Inches(2.2)
+    card_gap = Inches(0.2)
+    start_left = Inches(0.75)
+    card_top = Inches(2.1)
+    card_height = Inches(4.2)
+
+    for i, (name, role, desc, color) in enumerate(sponsors):
+        left = start_left + i * (card_width + card_gap)
+        
+        # Background shape
+        shape = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, left, card_top, card_width, card_height)
+        shape.fill.solid()
+        shape.fill.fore_color.rgb = RGBColor(248, 250, 252)
+        shape.line.color.rgb = color
+        shape.line.width = Pt(1.5)
+
+        # Content inside card
+        tb_card = slide.shapes.add_textbox(left + Inches(0.12), card_top + Inches(0.15), card_width - Inches(0.24), card_height - Inches(0.3))
+        tf_card = tb_card.text_frame
+        tf_card.word_wrap = True
+        
+        p1 = tf_card.paragraphs[0]
+        p1.text = name
+        p1.font.name = "Aptos"
+        p1.font.size = Pt(13)
+        p1.font.bold = True
+        p1.font.color.rgb = color
+        p1.space_after = Pt(4)
+
+        p2 = tf_card.add_paragraph()
+        p2.text = role
+        p2.font.name = "Aptos"
+        p2.font.size = Pt(11)
+        p2.font.bold = True
+        p2.font.color.rgb = c_navy
+        p2.space_after = Pt(12)
+
+        p3 = tf_card.add_paragraph()
+        p3.text = desc
+        p3.font.name = "Aptos"
+        p3.font.size = Pt(10.5)
+        p3.font.color.rgb = c_slate
+
+    # Presenter Notes
+    slide.notes_slide.notes_text_frame.text = (
+        "Sponsor Integration Architecture:\n"
+        "- Pioneer handles model execution fail-closed behind a clean gateway.\n"
+        "- Senso provides indexed documentation and cited context retrieval.\n"
+        "- Actian VectorAI stores execution trajectories and failure patterns for fast similarity search.\n"
+        "- Band routes uncertain decisions to real human reviewers.\n"
+        "- Guild.ai governs active release promotion and system publication."
+    )
+
+    prs.save(pptx_path)
+    print("Updated PPTX:", pptx_path)
+
+def update_pdf(pdf_path="outputs/evox-simple-explainer.pdf"):
     page_width = 13.33 * 72
     page_height = 7.5 * 72
 
     doc = SimpleDocTemplate(
-        filename,
+        pdf_path,
         pagesize=(page_width, page_height),
         leftMargin=54,
         rightMargin=54,
@@ -21,7 +155,6 @@ def build_pdf(filename="outputs/evox-simple-explainer.pdf"):
 
     styles = getSampleStyleSheet()
 
-    # Custom styles
     c_navy = colors.HexColor('#0F172A')
     c_blue = colors.HexColor('#2563EB')
     c_bg_blue = colors.HexColor('#EFF6FF')
@@ -31,6 +164,8 @@ def build_pdf(filename="outputs/evox-simple-explainer.pdf"):
     c_bg_orange = colors.HexColor('#FFF7ED')
     c_slate = colors.HexColor('#475569')
     c_light_gray = colors.HexColor('#E2E8F0')
+    c_purple = colors.HexColor('#9333EA')
+    c_bg_purple = colors.HexColor('#FAF5FF')
 
     title_style = ParagraphStyle(
         'SlideTitle',
@@ -66,7 +201,7 @@ def build_pdf(filename="outputs/evox-simple-explainer.pdf"):
         fontSize=12,
         leading=14,
         textColor=c_slate,
-        alignment=2 # Right
+        alignment=2
     )
 
     box_header_style = ParagraphStyle(
@@ -76,7 +211,7 @@ def build_pdf(filename="outputs/evox-simple-explainer.pdf"):
         fontSize=14,
         leading=18,
         textColor=c_navy,
-        alignment=1 # Center
+        alignment=1
     )
 
     box_body_style = ParagraphStyle(
@@ -86,7 +221,7 @@ def build_pdf(filename="outputs/evox-simple-explainer.pdf"):
         fontSize=11,
         leading=15,
         textColor=c_slate,
-        alignment=1 # Center
+        alignment=1
     )
 
     row_label_style = ParagraphStyle(
@@ -114,14 +249,14 @@ def build_pdf(filename="outputs/evox-simple-explainer.pdf"):
         fontSize=13,
         leading=17,
         textColor=c_slate,
-        alignment=1 # Center
+        alignment=1
     )
 
     story = []
 
     def make_header(slide_num):
         t = Table([
-            [Paragraph("EVOX", header_style), Paragraph(f"0{slide_num} / 05", header_right_style)]
+            [Paragraph("EVOX", header_style), Paragraph(f"0{slide_num} / 06", header_right_style)]
         ], colWidths=[400, 452])
         t.setStyle(TableStyle([
             ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
@@ -140,17 +275,12 @@ def build_pdf(filename="outputs/evox-simple-explainer.pdf"):
     story.append(Paragraph("You define what success means. Evox turns that definition into a system that can learn from every measured result.", subtitle_style))
     story.append(Spacer(1, 45))
 
-    # Flow diagram table
     b1 = Paragraph("<b>PROBLEM</b>", box_header_style)
     b2 = Paragraph("<b>AGENTIC SYSTEM</b>", ParagraphStyle('B2', parent=box_header_style, textColor=c_blue))
     b3 = Paragraph("<b>BETTER RESULTS</b>", ParagraphStyle('B3', parent=box_header_style, textColor=c_green))
-
     arr = Paragraph("<b>→</b>", ParagraphStyle('Arr', parent=box_header_style, fontSize=24, textColor=c_slate))
 
-    flow_table = Table([
-        [b1, arr, b2, arr, b3]
-    ], colWidths=[230, 40, 230, 40, 230])
-
+    flow_table = Table([[b1, arr, b2, arr, b3]], colWidths=[230, 40, 230, 40, 230])
     flow_table.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (0,0), c_light_gray),
         ('BACKGROUND', (2,0), (2,0), c_bg_blue),
@@ -164,16 +294,9 @@ def build_pdf(filename="outputs/evox-simple-explainer.pdf"):
         ('BOTTOMPADDING', (0,0), (-1,-1), 25),
     ]))
     story.append(flow_table)
-    story.append(Spacer(1, 50))
-    story.append(HRFlowable(width="100%", thickness=1, color=c_light_gray, spaceBefore=0, spaceAfter=0))
 
     # ---------------- SLIDE 2 ----------------
-    story.append(Spacer(1, 40)) # New slide break gap in single doc or page break
-    # We will use PageBreak() between slides
-    story.pop() # remove HRFlowable
-    from reportlab.platypus import PageBreak
     story.append(PageBreak())
-
     story.append(make_header(2))
     story.append(Spacer(1, 10))
     story.append(HRFlowable(width="100%", thickness=1, color=c_light_gray, spaceBefore=5, spaceAfter=20))
@@ -189,7 +312,6 @@ def build_pdf(filename="outputs/evox-simple-explainer.pdf"):
         [Paragraph("EVIDENCE", row_label_style), Paragraph("What data can prove the result?", row_body_style)],
         [Paragraph("BOUNDARIES", ParagraphStyle('R4', parent=row_label_style, textColor=c_navy)), Paragraph("What may the system do—and when must it ask a human?", row_body_style)],
     ]
-
     grid_table = Table(rows_data, colWidths=[180, 672])
     grid_table.setStyle(TableStyle([
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
@@ -205,7 +327,6 @@ def build_pdf(filename="outputs/evox-simple-explainer.pdf"):
 
     # ---------------- SLIDE 3 ----------------
     story.append(PageBreak())
-
     story.append(make_header(3))
     story.append(Spacer(1, 10))
     story.append(HRFlowable(width="100%", thickness=1, color=c_light_gray, spaceBefore=5, spaceAfter=20))
@@ -235,7 +356,6 @@ def build_pdf(filename="outputs/evox-simple-explainer.pdf"):
             Paragraph("Verify the result or escalate to a human.", box_body_style),
         ]
     ]
-
     step_table = Table(steps_data, colWidths=[180, 30, 180, 30, 180, 30, 180])
     step_table.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (0,1), c_bg_blue),
@@ -259,7 +379,6 @@ def build_pdf(filename="outputs/evox-simple-explainer.pdf"):
 
     # ---------------- SLIDE 4 ----------------
     story.append(PageBreak())
-
     story.append(make_header(4))
     story.append(Spacer(1, 10))
     story.append(HRFlowable(width="100%", thickness=1, color=c_light_gray, spaceBefore=5, spaceAfter=20))
@@ -274,21 +393,14 @@ def build_pdf(filename="outputs/evox-simple-explainer.pdf"):
 
     s_hdr = Paragraph("<b>SUCCESS</b>", ParagraphStyle('SH', parent=box_header_style, textColor=c_green))
     s_bdy = Paragraph("Reinforce the steps that worked.", box_body_style)
-
     f_hdr = Paragraph("<b>FAILURE</b>", ParagraphStyle('FH', parent=box_header_style, textColor=c_orange))
     f_bdy = Paragraph("Find the weak step and create a better candidate.", box_body_style)
-
     u_hdr = Paragraph("<b>UNCERTAIN</b>", ParagraphStyle('UH', parent=box_header_style, textColor=c_navy))
     u_bdy = Paragraph("Ask a human instead of guessing.", box_body_style)
 
     arrow_large = Paragraph("<b>→</b>", ParagraphStyle('AL', parent=box_header_style, fontSize=28, textColor=c_slate))
 
-    # Right side 3 outcomes stacked
-    outcomes_table = Table([
-        [s_hdr, s_bdy],
-        [f_hdr, f_bdy],
-        [u_hdr, u_bdy],
-    ], colWidths=[140, 360])
+    outcomes_table = Table([[s_hdr, s_bdy], [f_hdr, f_bdy], [u_hdr, u_bdy]], colWidths=[140, 360])
     outcomes_table.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (1,0), c_bg_green),
         ('BOX', (0,0), (1,0), 1, c_green),
@@ -302,10 +414,7 @@ def build_pdf(filename="outputs/evox-simple-explainer.pdf"):
         ('LEFTPADDING', (0,0), (-1,-1), 12),
     ]))
 
-    left_box_table = Table([
-        [c_box_hdr],
-        [c_box_bdy]
-    ], colWidths=[240])
+    left_box_table = Table([[c_box_hdr], [c_box_bdy]], colWidths=[240])
     left_box_table.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (0,1), c_navy),
         ('BOX', (0,0), (0,1), 1, c_navy),
@@ -317,21 +426,17 @@ def build_pdf(filename="outputs/evox-simple-explainer.pdf"):
         ('RIGHTPADDING', (0,0), (-1,-1), 12),
     ]))
 
-    eval_layout = Table([
-        [left_box_table, arrow_large, outcomes_table]
-    ], colWidths=[250, 40, 510])
+    eval_layout = Table([[left_box_table, arrow_large, outcomes_table]], colWidths=[250, 40, 510])
     eval_layout.setStyle(TableStyle([
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
         ('ALIGN', (1,0), (1,0), 'CENTER'),
     ]))
-
     story.append(eval_layout)
     story.append(Spacer(1, 30))
     story.append(Paragraph("Successes and failures become evidence for the next version.", bottom_note_style))
 
     # ---------------- SLIDE 5 ----------------
     story.append(PageBreak())
-
     story.append(make_header(5))
     story.append(Spacer(1, 10))
     story.append(HRFlowable(width="100%", thickness=1, color=c_light_gray, spaceBefore=5, spaceAfter=20))
@@ -354,7 +459,6 @@ def build_pdf(filename="outputs/evox-simple-explainer.pdf"):
         [p1_hdr, arr, p2_hdr, arr, p3_hdr, arr, p4_hdr],
         [p1_bdy, "", p2_bdy, "", p3_bdy, "", p4_bdy]
     ], colWidths=[180, 30, 180, 30, 180, 30, 180])
-
     loop_table.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (0,1), colors.HexColor('#F8FAFC')),
         ('BACKGROUND', (2,0), (2,1), colors.HexColor('#F8FAFC')),
@@ -399,8 +503,78 @@ def build_pdf(filename="outputs/evox-simple-explainer.pdf"):
     ]))
     story.append(guardrail_box)
 
+    # ---------------- SLIDE 6 (NEW: SPONSOR INTEGRATION) ----------------
+    story.append(PageBreak())
+    story.append(make_header(6))
+    story.append(Spacer(1, 10))
+    story.append(HRFlowable(width="100%", thickness=1, color=c_light_gray, spaceBefore=5, spaceAfter=20))
+
+    story.append(Paragraph("Every sponsor technology sits behind a production port.", title_style))
+    story.append(Spacer(1, 10))
+    story.append(Paragraph("Real persisted state and configured integrations power the entire learning loop.", subtitle_style))
+    story.append(Spacer(1, 30))
+
+    card_pioneer = [
+        Paragraph("<b>PIONEER</b>", ParagraphStyle('CP1', parent=box_header_style, textColor=c_blue)),
+        Paragraph("Model Gateway", ParagraphStyle('CR1', parent=box_header_style, textColor=c_navy, fontSize=12)),
+        Spacer(1, 8),
+        Paragraph("Production gateway for model execution and prompt inference.", box_body_style)
+    ]
+
+    card_senso = [
+        Paragraph("<b>SENSO</b>", ParagraphStyle('CP2', parent=box_header_style, textColor=c_purple)),
+        Paragraph("Knowledge Layer", ParagraphStyle('CR2', parent=box_header_style, textColor=c_navy, fontSize=12)),
+        Spacer(1, 8),
+        Paragraph("Ingests documentation and provides cited context retrieval.", box_body_style)
+    ]
+
+    card_actian = [
+        Paragraph("<b>ACTIAN VECTORAI</b>", ParagraphStyle('CP3', parent=box_header_style, textColor=c_green)),
+        Paragraph("Outcome Memory", ParagraphStyle('CR3', parent=box_header_style, textColor=c_navy, fontSize=12)),
+        Spacer(1, 8),
+        Paragraph("Stores searchable run outcomes, trajectories, and failure patterns.", box_body_style)
+    ]
+
+    card_band = [
+        Paragraph("<b>BAND</b>", ParagraphStyle('CP4', parent=box_header_style, textColor=c_orange)),
+        Paragraph("Human Escalation", ParagraphStyle('CR4', parent=box_header_style, textColor=c_navy, fontSize=12)),
+        Spacer(1, 8),
+        Paragraph("Carries remote human interventions and correlated response events.", box_body_style)
+    ]
+
+    card_guild = [
+        Paragraph("<b>GUILD.AI</b>", ParagraphStyle('CP5', parent=box_header_style, textColor=c_navy)),
+        Paragraph("Release Governance", ParagraphStyle('CR5', parent=box_header_style, textColor=c_navy, fontSize=12)),
+        Spacer(1, 8),
+        Paragraph("Publishes and governs active production releases and candidate models.", box_body_style)
+    ]
+
+    sponsors_grid = Table([[card_pioneer, card_senso, card_actian, card_band, card_guild]], colWidths=[162, 162, 162, 162, 162])
+    sponsors_grid.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (0,0), c_bg_blue),
+        ('BOX', (0,0), (0,0), 1, c_blue),
+        ('BACKGROUND', (1,0), (1,0), c_bg_purple),
+        ('BOX', (1,0), (1,0), 1, c_purple),
+        ('BACKGROUND', (2,0), (2,0), c_bg_green),
+        ('BOX', (2,0), (2,0), 1, c_green),
+        ('BACKGROUND', (3,0), (3,0), c_bg_orange),
+        ('BOX', (3,0), (3,0), 1, c_orange),
+        ('BACKGROUND', (4,0), (4,0), colors.HexColor('#F8FAFC')),
+        ('BOX', (4,0), (4,0), 1, c_navy),
+        ('VALIGN', (0,0), (-1,-1), 'TOP'),
+        ('TOPPADDING', (0,0), (-1,-1), 16),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 16),
+        ('LEFTPADDING', (0,0), (-1,-1), 8),
+        ('RIGHTPADDING', (0,0), (-1,-1), 8),
+    ]))
+
+    story.append(sponsors_grid)
+    story.append(Spacer(1, 35))
+    story.append(Paragraph("Integrations are fail-closed with real persisted state — no synthetic or mock fallbacks in production paths.", bottom_note_style))
+
     doc.build(story)
-    print("PDF build complete:", filename)
+    print("Updated PDF:", pdf_path)
 
 if __name__ == "__main__":
-    build_pdf()
+    add_sponsor_slide_to_pptx()
+    update_pdf()

@@ -3,7 +3,7 @@
 ## Artifact
 
 - Deliverable: `outputs/evox-simple-explainer.pptx`
-- Format: editable 16:9 PowerPoint with five slides and presenter notes on every slide.
+- Format: editable 16:9 PowerPoint and matching PDF with six slides and presenter notes.
 - Purpose: explain Evox to hackathon judges in plain language without relying on the earlier GORGOS visual system or diagrams.
 
 ## Narrative
@@ -15,6 +15,7 @@ The deck reduces Evox to one causal sequence:
 3. Every result is measured against the same success criteria.
 4. Outcomes become evidence for a new candidate.
 5. A candidate becomes active only when it proves better without changing the rules.
+6. Every sponsor technology (Pioneer, Senso, Actian VectorAI, Band, Guild.ai) sits behind clean production ports.
 
 The closing distinction is: the system learns how to work; the owner keeps control of what “better” means.
 
@@ -34,7 +35,6 @@ The closing distinction is: the system learns how to work; the owner keeps contr
 
 ## Verification
 
-- All five slides rendered successfully through the PowerPoint-compatible rendering path.
-- Every rendered slide was inspected at full size.
-- `slides_test.py` passed with no overflow detected.
-- The exported package contains presenter notes for all five slides and passes ZIP integrity validation.
+- All six slides rendered successfully to PPTX and PDF.
+- Every rendered slide page was verified visually via high-resolution PNG rendering.
+- The exported package contains presenter notes for all slides.
