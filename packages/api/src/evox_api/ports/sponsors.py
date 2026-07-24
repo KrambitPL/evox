@@ -8,6 +8,8 @@ from evox_api.domain.contracts import AgenticSystemSpec, ReleaseDecision, RunOut
 
 @dataclass(frozen=True)
 class KnowledgeCitation:
+    citation_id: str
+    document_id: str
     source_uri: str
     source_title: str
     retrieved_at: datetime
