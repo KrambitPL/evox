@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Protocol
 
-from evox_api.domain.contracts import AgenticSystemSpec, ReleaseDecision, RunOutcome
+from evox_api.domain.contracts import AgenticSystemSpec, JobId, ReleaseDecision, RunOutcome
 
 
 @dataclass(frozen=True)
@@ -39,7 +39,7 @@ class OutcomeMemoryPort(Protocol):
 
 
 class EscalationPort(Protocol):
-    async def escalate(self, run: RunOutcome) -> str: ...
+    async def escalate(self, run: RunOutcome, *, job_id: JobId) -> str: ...
 
 
 class PublicationPort(Protocol):
