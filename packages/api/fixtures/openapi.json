@@ -1,0 +1,21 @@
+{
+  "info": {
+    "title": "Evox API",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/v1/candidates/{id}": ["get"],
+    "/v1/candidates/{id}/promote": ["post"],
+    "/v1/integrations/health": ["get"],
+    "/v1/jobs/{id}": ["get"],
+    "/v1/missions": ["post"],
+    "/v1/missions/{id}": ["get"],
+    "/v1/missions/{id}/forge": ["post"],
+    "/v1/releases/{id}/rollback": ["post"],
+    "/v1/runs/{id}/feedback": ["post"],
+    "/v1/systems/{id}/evaluations": ["post"],
+    "/v1/systems/{id}/evolutions": ["post"],
+    "/v1/systems/{id}/runs": ["post"]
+  }
+}

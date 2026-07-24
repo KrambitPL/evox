@@ -1,0 +1,10 @@
+{
+  "name": "evox",
+  "private": true,
+  "packageManager": "pnpm@11.0.0",
+  "scripts": {
+    "build": "pnpm --filter @evox/web build",
+    "lint": "pnpm --filter @evox/web lint",
+    "test:e2e": "pnpm --filter @evox/web test:e2e"
+  }
+}
