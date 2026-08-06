@@ -42,3 +42,16 @@ was explicitly approved for the hackathon.
 `make e2e`, `make test-replay`, `make lint`, `make build`, `make verify-live`,
 `make smoke`, and `make deploy` are the stable project interface.
 
+
+<!-- BEGIN FLOWMARK INTEGRATION format=f03 surface=agents-md -->
+## flowmark
+
+Auto-format Markdown with `flowmark` for clean, semantic git diffs.
+
+- Run `flowmark --auto <files>` on Markdown you create or edit.
+- Run `flowmark --docs` for full usage and `flowmark --skill` for the skill.
+- If `flowmark` is not on `PATH`, use a pinned `uvx` runner (never `@latest`).
+- Fast Rust port (recommended): `uvx --from flowmark-rs==0.3.2 flowmark`.
+- Python build (library / newest patch): `uvx --from flowmark==0.7.2 flowmark`.
+
+<!-- END FLOWMARK INTEGRATION -->

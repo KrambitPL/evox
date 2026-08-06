@@ -1,0 +1,6 @@
+# .flowmarkignore — Markdown Flowmark must not reformat (gitignore syntax).
+# .gitignore and Flowmark's built-in defaults (node_modules, .venv, build, dist, …)
+# are already respected; list only generated or byte-exact files here.
+CHANGELOG.md
+**/*.generated.md
+**/__snapshots__/
